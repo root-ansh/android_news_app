@@ -1,50 +1,48 @@
 package io.github.curioustools.curiousnews
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.curioustools.curiousnews.ui.theme.CuriousNewsTheme
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var sharedPrefs: SharedPrefs
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableBackgroundControllableEdgeToEdge()
+
+
         setContent {
-            CuriousNewsTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+            val themeSnapshot by produceState(
+                initialValue = sharedPrefs.getCurrentThemeInfo(),
+                key1 = sharedPrefs,
+                producer ={
+                    val callback = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                        if (sharedPrefs.isChangedKeyThemeKey(key)) {
+                            value = sharedPrefs.getCurrentThemeInfo()
+                        }
+                    }
+                    sharedPrefs.userSettings.registerListener(callback)
+                    awaitDispose { sharedPrefs.userSettings.unregisterListener(callback) }
                 }
-            }
+            )
+
+            AppTheme  (
+                themeType = themeSnapshot.first,
+                dynamicColor = themeSnapshot.second,
+                content = { AppGraph() }
+            )
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CuriousNewsTheme {
-        Greeting("Android")
-    }
-}
