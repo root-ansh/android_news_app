@@ -231,7 +231,7 @@ fun SettingItems(modifier: Modifier = Modifier, state: DashboardState = Dashboar
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(shape)
-                        .clickable { onClick.invoke(DashboardIntent.QuickLinkClick(model)) }
+                        .clickable { onClick.invoke(DashboardIntent.ActionClicked(model)) }
                         .padding(bottom = 1.dp)
                         .background(colors.tertiaryContainer, shape)
                         .padding(vertical = 16.dp, horizontal = 8.dp)

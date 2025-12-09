@@ -2,14 +2,13 @@ package io.github.curioustools.curiousnews
 
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
+import androidx.compose.ui.util.fastJoinToString
 import com.google.gson.annotations.SerializedName
-import io.github.curioustools.curiousnews.AppApiService.Companion.FIELD_VAL_LANG
-import io.github.curioustools.curiousnews.AppApiService.Companion.FIELD_VAL_SORT
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import io.github.curioustools.curiousnews.NewsApiService.Companion.FIELD_VAL_LANG
+import io.github.curioustools.curiousnews.NewsApiService.Companion.FIELD_VAL_SORT
 import kotlinx.serialization.Serializable
 import retrofit2.Call
-import retrofit2.http.Field
 import retrofit2.http.GET
 import retrofit2.http.Query
 import java.text.SimpleDateFormat
@@ -17,9 +16,9 @@ import java.util.TimeZone
 import javax.inject.Inject
 
 
-interface AppApiService {
+interface NewsApiService {
     @GET(PATH)
-    fun getArticles(
+    fun getNewsResults(
         @Query(FIELD_Q) search: String,
         @Query(FIELD_PAGE) pageNum: Int,
         @Query(FIELD_PAGE_SIZE) resultSize: Int,
@@ -39,15 +38,13 @@ interface AppApiService {
         const val FIELD_SORT = "sortBy"
         const val FIELD_VAL_SORT = "publishedAt"
         const val FIELD_VAL_LANG = "en"
-
-
     }
 }
 
 
-class AppApiRepoImpl @Inject constructor (private val apiService: AppApiService): AppApiRepo {
-    override suspend fun getAllArticles(request: NewsRequest): BaseResponse<NewsResults> {
-        return  apiService.getArticles(
+class NewsApiRepoImpl @Inject constructor (private val apiService: NewsApiService): NewsApiRepo {
+    override suspend fun getNewsList(request: NewsRequest): BaseResponse<NewsResults> {
+        return  apiService.getNewsResults(
             search = request.search,
             pageNum = request.pageNum,
             resultSize = request.resultSize,
@@ -58,27 +55,65 @@ class AppApiRepoImpl @Inject constructor (private val apiService: AppApiService)
     }
 
 }
-interface AppApiRepo{
-    suspend fun getAllArticles(request: NewsRequest): BaseResponse<NewsResults>
+interface NewsApiRepo{
+    suspend fun getNewsList(request: NewsRequest): BaseResponse<NewsResults>
 }
 
-
-class ArticlesUseCase @Inject constructor(private val repo: AppApiRepo) :
-    BaseUseCase<BaseResponse<NewsResults>, NewsRequest>() {
-    override suspend fun execute(params: NewsRequest): BaseResponse<NewsResults> {
-        return repo.getAllArticles(params)
+class UpdateBookmarksUseCase @Inject constructor(
+    private val repo: NewsApiRepo,
+    private val cache: NewsApiCache
+) : BaseUseCase<Unit, NewsResults.NewsItem>() {
+    override suspend fun execute(params: NewsResults.NewsItem) {
+        cache.updateNewsEntity(params)
+        return
     }
 
+
+    data class Params(val request: NewsRequest, val cachedOnly: Boolean = false)
+
 }
 
 
 
+class NewsListUseCase @Inject constructor(
+    private val repo: NewsApiRepo,
+    private val cache: NewsApiCache
+) : BaseUseCase<BaseResponse.Success<NewsResults>, NewsListUseCase.Params>() {
 
-abstract class BaseUseCase<out Result, in Params> {
-    abstract suspend fun execute(params: Params): Result
-    suspend fun executeAsync(params: Params):Result{
-        return withContext(Dispatchers.IO) {
-            execute(params)
+    data class Params(val request: NewsRequest, val cachedOnly: Boolean = false, val isSearch: Boolean = false)
+
+    override suspend fun execute(params: Params): BaseResponse.Success<NewsResults> {
+        log("request_info : pagenum : ${params.request.pageNum} | cached Only = ${params.cachedOnly}")
+        val origCache = cache.getCachedNewsList()
+        if (params.cachedOnly && origCache.isNotEmpty()) {
+            return BaseResponse.Success(NewsResults(articles = origCache.sortedByDescending { it.timeStamp() }))
+        } else {
+            val freshResults = repo.getNewsList(params.request)
+            when(freshResults){
+                is BaseResponse.Failure -> {
+                    if(params.isSearch){
+                        return BaseResponse.Success(NewsResults())
+                    }else{
+                        return BaseResponse.Success(NewsResults(articles = origCache.sortedByDescending { it.timeStamp() }))
+                    }
+                }
+                is BaseResponse.Success -> {
+                    if(params.isSearch){
+                        val finalResults = freshResults.body.articles.map { resp ->
+                            val cachedRes = origCache.firstOrNull { it.title.equals(resp.title,true) }
+                            cachedRes?:resp
+                        }
+                        return freshResults.copy(body = freshResults.body.copy(articles = finalResults))
+
+                    }
+                    else{
+                        freshResults.body.articles.forEach { cache.addNewsEntity(it) }
+                        val newCache = cache.getCachedNewsList()
+                        return freshResults.copy(body = freshResults.body.copy(articles = newCache.sortedByDescending { it.timeStamp() }))
+                    }
+
+                }
+            }
         }
     }
 }
@@ -87,8 +122,8 @@ abstract class BaseUseCase<out Result, in Params> {
 @Keep @Serializable @Immutable
 data class NewsRequest(
     val search: String,
-    val  pageNum: Int = 1,
-    val resultSize: Int = 10,
+    val  pageNum: Int,
+    val resultSize: Int,
     val  apiKey: String,
     val  language: String,
     val  sortBy: String
@@ -98,7 +133,7 @@ data class NewsRequest(
             return NewsRequest(
                 search = "Business",
                 pageNum = pageNum,
-                resultSize = 50,
+                resultSize = 10,
                 apiKey = BuildConfig.NEWS_API_KEY,
                 language = FIELD_VAL_LANG,
                 sortBy = FIELD_VAL_SORT
@@ -131,11 +166,10 @@ data class NewsResults(
         @SerializedName("publishedAt") val publishedAt: String = "",
         @SerializedName("source") val source: Source = Source(),
         @SerializedName("title") val title: String = "",
-        @SerializedName("url") val url: String = "",
-        @SerializedName("urlToImage") val urlToImage: String = "",
-        val cachedId: String = "unset",
+        @SerializedName("url") val url: String? = null,
+        @SerializedName("urlToImage") val urlToImage: String? = null,
         val isLoading: Boolean = false,
-        val isBookmarked: Boolean = false,
+        var isBookmarked: Boolean = false,
     ) {
         fun publishedOn(): String {
             return runCatching {
@@ -147,7 +181,22 @@ data class NewsResults(
                 outputFormat.format(date!!)
             }.getOrElse { publishedAt }
         }
+        fun timeStamp(): Long {
+            return runCatching {
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                inputFormat.timeZone = TimeZone.getTimeZone("UTC")
+                val date = inputFormat.parse(publishedAt)!!
+                date.time
+            }.getOrElse { System.currentTimeMillis() }
+        }
         fun info() = "From: ${source.name} • Published on: ${publishedOn()}"
+
+        fun toShareMsg() = """
+            $title
+            ${urlToImage.orEmpty()}
+            Read more at $url
+            or Read Summary at curiousnews://post-summary/${title}
+        """.trimIndent()
 
     }
 
@@ -155,10 +204,28 @@ data class NewsResults(
     data class Source(@SerializedName("name") val name: String = "")
 
     companion object{
+
+        fun lorem(i:Int) = LoremIpsum(i).values.toList().fastJoinToString()
+
         fun loading() =
             NewsResults(
-                articles = (1..5).map {  NewsItem(isLoading = true) }
+                articles = (1..5).map {  NewsItem(isLoading = true, title = it.toString()) }
             )
+        fun mock() =
+            NewsResults(
+                articles = (1..5).map {  NewsItem(
+                    isLoading = false, title = lorem(5),
+                    author = lorem(3),
+                    content = lorem(50),
+                    description = lorem(20),
+                    publishedAt = lorem(2),
+                    source = Source(lorem(2)),
+                    url = lorem(1),
+                    urlToImage = lorem(1),
+                    isBookmarked = false
+                ) }
+            )
+
     }
 
 }

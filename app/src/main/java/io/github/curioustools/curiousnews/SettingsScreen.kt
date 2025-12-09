@@ -58,12 +58,7 @@ fun SettingsScreen(
     val state by dashboardViewModel.state.collectAsStateWithLifecycle(lifeCycleOwner)
     val colors = MaterialTheme.colorScheme
 
-    LaunchedEffect(Unit) {
-        scope.launch {
-            delay(100)
-            dashboardViewModel.onIntent(DashboardIntent.InitDashboard)
-        }
-    }
+
     LaunchedEffect(Unit) {
         dashboardViewModel.events.flowWithLifecycle(lifeCycleOwner.lifecycle).collect { event ->
             showLoader = false

@@ -37,23 +37,15 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.WarningAmber
-import androidx.compose.material.icons.outlined.Feedback
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,7 +54,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -80,8 +71,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -100,10 +89,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -548,15 +533,15 @@ fun AppLinkButton(
     isEnabled: Boolean = true,
     textTakesFullWidth: Boolean = false,
     textModifier: Modifier =  defaultTextModifier,
+    textStyle: TextStyle = textStyles().CTALarge.copy(textDecoration = TextDecoration.Underline),
     onClick: () -> Unit = {},
 ) {
-    val style = MaterialTheme.localTypographyClass.CTALarge.copy(textDecoration = TextDecoration.Underline)
     RawAppRoundButton(
         config = AppButtonConfig(
             text = text?.let {  InternalTextConfig.Text(
                 text = text,
                 modifier = textModifier,
-                style = style,
+                style = textStyle,
                 align = TextAlign.Center
             )},
             outerSurfaceModifier = modifier,
@@ -705,11 +690,11 @@ fun PreviewButton() {
     }
 }
 
-
+@Preview
 @Composable
 fun AppToolbar(
     modifier: Modifier = Modifier,
-    title: String,
+    title: String = "Test Title",
     titleStyle: TextStyle = MaterialTheme.localTypographyClass.titleLarge,
     startIcon: ActionModel? = ActionModel("", "", ActionModelType.BACK),
     rightMenu: List<ActionModel> = listOf(),
@@ -739,7 +724,7 @@ fun AppToolbar(
                     text = title,
                     modifier = Modifier.Companion
                         .weight(1f)
-                        .padding(horizontal = 8.dp, vertical = 16.dp),
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
                     color = contentColor,
                     style = titleStyle
                 )
@@ -749,57 +734,6 @@ fun AppToolbar(
                     }
                 }
 
-            }
-        }
-
-        Box(
-            Modifier.Companion
-                .wrapContentHeight()
-                .wrapContentWidth()
-                .align(Alignment.Companion.End)
-                .padding(horizontal = 8.dp)
-        ) {
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                rightMenu.map { action ->
-                    val text = when (action.type) {
-                        ActionModelType.URL -> action.text
-                        else -> action.type.name.toLangSpecific()
-                    }
-                    DropdownMenuItem(
-                        text = {
-                            Row(
-                                Modifier.Companion.fillMaxWidth(),
-                                verticalAlignment = Alignment.Companion.CenterVertically
-                            ) {
-                                Image(
-                                    modifier = Modifier.Companion
-                                        .padding(end = 8.dp)
-                                        .size(24.dp)
-                                        .padding(4.dp),
-                                    painter = painterResource(action.icon),
-                                    contentScale = ContentScale.Companion.FillBounds,
-                                    contentDescription = "",
-                                    colorFilter = ColorFilter.Companion.tint(MaterialTheme.colorScheme.onBackground)
-                                )
-                                Text(
-                                    text = text.toLangSpecific(),
-                                    modifier = Modifier.Companion
-                                        .weight(1f)
-                                        .padding(8.dp),
-                                    style = textStylesSystem().bodyMedium
-                                )
-                            }
-
-                        },
-                        onClick = {
-                            expanded = false
-                            onClick.invoke((action))
-                        }
-                    )
-                }
             }
         }
     }

@@ -91,12 +91,6 @@ ksp {
     arg("room.incremental", "true")
     arg("room.generateKotlin", "true")
 }
-/*
-    https://developer.android.com/reference/tools/gradle-api/8.3/null/com/android/build/api/dsl/DependenciesInfo
-    dont enable unless explicitly asked by google
-    android.dependenciesInfo.includeInApk = true
-    android.dependenciesInfo.includeInBundle = true
-*/
 
 
 
@@ -128,6 +122,18 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.lifecycle.viewmodel)
+
+    // arch : paging and compose
+    implementation("androidx.paging:paging-runtime:3.3.6")
+    testImplementation("androidx.paging:paging-common:3.3.6")
+    implementation("androidx.paging:paging-compose:3.4.0-alpha04")
+    implementation("androidx.room:room-runtime:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    implementation("androidx.room:room-paging:2.8.4")
+    testImplementation("androidx.room:room-testing:2.8.4")
+
+
 
     //arch compose
     implementation(platform(libs.compose.bom))
@@ -174,12 +180,7 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.browser)
     implementation(libs.androidx.webkit)
-    implementation(libs.androidx.exoplayer.media3)
-    implementation(libs.androidx.exoplayer.media3.dash)
-    implementation(libs.androidx.exoplayer.media3.hls)
-    implementation(libs.androidx.exoplayer.media3.session)//todo remove this
-    implementation(libs.androidx.exoplayer.media3.ui)
-    implementation(libs.compose.exoplayer.media3.ui)
+
 
 
 }

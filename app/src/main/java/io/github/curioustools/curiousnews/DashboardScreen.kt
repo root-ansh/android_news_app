@@ -42,6 +42,7 @@ fun DashboardScreen(
     backStack: NavBackStack<NavKey>,
     viewModel: DashboardViewModel,
 ) {
+    log("test : DashboardScreen")
     val scope = rememberCoroutineScope()
     val allPages = NavBarItem.entries
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { allPages.size })
@@ -57,7 +58,8 @@ fun DashboardScreen(
     LaunchedEffect(Unit) {
         scope.launch {
             delay(100)
-            viewModel.onIntent(DashboardIntent.InitDashboard)
+            log("test : calling init dashboard")
+            viewModel.onIntent(DashboardIntent.InitDashboard(false))
         }
     }
     LaunchedEffect(Unit) {

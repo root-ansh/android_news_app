@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -58,7 +59,7 @@ fun SearchScreen(
 
         AppToolbar(
             title = stringResource(R.string.search_for_an_article), startIcon = null,
-            titleStyle = MaterialTheme.localTypographyClass.titleRegular,
+            titleStyle = textStyles().titleLarge,
         )
 
         Column(
@@ -84,7 +85,8 @@ fun SearchScreen(
                 }
                 if (state.allSearchResults.articles.isEmpty() && state.isAllSearchLoading.not()){
                     Column(
-                        Modifier.fillMaxWidth()
+                        Modifier
+                            .fillMaxWidth()
                             .padding(16.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         val text = if (state.allSearchRequest.search.isEmpty()) "Enter something to start a search" else " No Results found"
@@ -93,7 +95,9 @@ fun SearchScreen(
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            modifier = Modifier.padding(16.dp).size(150.dp),
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .size(150.dp),
                             tint = colors().primary.copy(alpha = 0.5f)
                         )
                         Text(
@@ -106,10 +110,20 @@ fun SearchScreen(
                     }
                 }else{
                     Column(Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp),
+                        .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
                         content = {
-                            entries.articles.map { NewsCard(it) }
+                            entries.articles.map {
+                                entries.articles.map {
+                                    NewsCard(
+                                        pos = 0,
+                                        item = it,
+                                        isBookMarkScreen = false,
+                                        isSearchScreen = true,
+                                        onClick = onClick
+                                    )
+                                }
+
+                            }
                             Spacer(Modifier.size(120.dp))
 
                         }
@@ -139,6 +153,7 @@ fun SearchField(
     var currentValue by remember { mutableStateOf(initialValue) }
     val selfFocusRequestor = remember { selfFocus ?: FocusRequester() }
     val styles = textStyles()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     OutlinedTextField(
         value = currentValue,
@@ -160,7 +175,9 @@ fun SearchField(
                 }
             }
         },
-        modifier = modifier.fillMaxWidth().focusRequester(selfFocusRequestor),
+        modifier = modifier
+            .fillMaxWidth()
+            .focusRequester(selfFocusRequestor),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { nextFocus?.requestFocus() }),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
@@ -177,6 +194,13 @@ fun SearchField(
         if (currentValue.length < 3) return@LaunchedEffect
         delay(debounceTime)
         onValueAvailable(currentValue,false)
+        keyboardController?.hide()
     }
 }
 
+
+@Composable
+fun HideKeyboard() {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    keyboardController?.hide()
+}

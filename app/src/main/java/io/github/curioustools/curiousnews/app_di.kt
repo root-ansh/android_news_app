@@ -9,6 +9,12 @@ import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.Keep
 import androidx.annotation.RequiresPermission
 import androidx.annotation.WorkerThread
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.RoomDatabase.QueryCallback
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -18,6 +24,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.Authenticator
 import okhttp3.Cache
 import okhttp3.Call
@@ -50,7 +58,9 @@ import java.net.Socket
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
@@ -61,11 +71,15 @@ import kotlin.collections.forEach
 import kotlin.let
 
 
-
-
 @Module
 @InstallIn(SingletonComponent::class)
 object AppDI {
+
+    @Singleton @Provides
+    fun providesRoomDatabase(@ApplicationContext context: Context): AppDatabase {
+        return AppDatabase.instance(context)
+    }
+
 
     @Provides
     fun provideSharedPrefs(@ApplicationContext context: Context, ): SharedPrefs {
@@ -80,7 +94,7 @@ object AppDI {
         } else {
             getMyUnsafeOkHttpBuilderPROD(null, null, ctx).build()
         }
-        return getRetrofitBuilder(AppApiService.BASE, client).addScalerConvertor().addGsonConvertor().build()
+        return getRetrofitBuilder(NewsApiService.BASE, client).addScalerConvertor().addGsonConvertor().build()
     }
 
 
@@ -95,17 +109,91 @@ object AppDI {
 @InstallIn(SingletonComponent::class)
 abstract class AppApisDI{
     @Binds
-    abstract fun bindRepo(repoImpl: AppApiRepoImpl): AppApiRepo
+    abstract fun bindRepo(repoImpl: NewsApiRepoImpl): NewsApiRepo
+
+    @Binds
+    abstract fun bindCache(cacheImpl: NewsApiCacheImpl): NewsApiCache
+
 
 
     companion object{
         @Provides
-        fun getAppApiService(retrofit: Retrofit): AppApiService {
-            return retrofit.create(AppApiService::class.java)
+        fun providesNewsDao(appDatabase: AppDatabase): NewsDao {
+            return appDatabase.newsDao()
+        }
+
+        @Provides
+        fun getAppApiService(retrofit: Retrofit): NewsApiService {
+            return retrofit.create(NewsApiService::class.java)
         }
     }
 
 }
+
+class Migration1To2 : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        if ( db.isColumnExists(AppDatabase.TABLE_NEWS, "some_table_column").not() ) {
+            db.execSQL("ALTER TABLE  ${AppDatabase.TABLE_NEWS} ADD COLUMN some_table_column TEXT NOT NULL DEFAULT ''")
+        }
+    }
+}
+
+@Database(entities = [NewsEntity::class], version = 2, exportSchema = true)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun newsDao(): NewsDao
+
+    companion object {
+        const val DB_NAME = "app_database"
+        const val TABLE_NEWS = "news"
+
+        fun allMigrations() = arrayOf(Migration1To2())
+
+        fun instance(context: Context): AppDatabase{
+            val dbBuilder = Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
+            dbBuilder.addMigrations(*allMigrations())
+            dbBuilder.also {dbBuilder ->
+                if(BuildConfig.DEBUG){
+                    val executor: Executor = Executors.newSingleThreadExecutor()
+                    val queryCallback = QueryCallback { sqlQuery, bindArgs ->
+                        val str = "Room DB: executed query: `$sqlQuery` with args: `$bindArgs`"
+                        log(str)
+                    }
+                    dbBuilder.setQueryCallback(queryCallback, executor)
+                }
+            }
+            return dbBuilder.build()
+        }
+    }
+
+}
+
+fun SupportSQLiteDatabase.isColumnExists(tableName: String, columnName: String): Boolean {
+    val cursor = this.query("PRAGMA table_info($tableName)")
+    cursor.use {
+        while (it.moveToNext()) {
+            val nameIndex = it.getColumnIndex("name")
+            if (nameIndex != -1) {
+                val existingColumnName = it.getString(nameIndex)
+                if (existingColumnName == columnName) {
+                    return true
+                }
+            }
+        }
+    }
+    return false
+}
+
+
+
+abstract class BaseUseCase<out Result, in Params> {
+    abstract suspend fun execute(params: Params): Result
+    suspend fun executeAsync(params: Params):Result{
+        return withContext(Dispatchers.IO) {
+            execute(params)
+        }
+    }
+}
+
 
 
 //todo fix
