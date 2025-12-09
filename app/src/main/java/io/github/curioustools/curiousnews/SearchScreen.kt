@@ -79,7 +79,7 @@ fun SearchScreen(
                         modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp),
                         style = textStyles().labelRegular,
                         color = colors().onSurface,
-                        text = "${state.allSearchResults.articles.size} items available for your query '${state.allSearchRequest.search}'"
+                        text = "${state.allSearchResults.totalResults} items available for your query '${state.allSearchRequest.search}'"
                     )
                 }
                 if (state.allSearchResults.articles.isEmpty() && state.isAllSearchLoading.not()){

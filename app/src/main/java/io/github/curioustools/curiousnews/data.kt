@@ -94,13 +94,12 @@ data class NewsRequest(
     val  sortBy: String
 ){
     companion object{
-        private const val  KEY = "bc45ff3e7dfe4362bb18a14ca3ad2c5b"////BuildConfig.VERSION_NAME,//TODO BUILDCONFIG
         fun all(pageNum: Int = 1): NewsRequest {
             return NewsRequest(
                 search = "Business",
                 pageNum = pageNum,
                 resultSize = 50,
-                apiKey = KEY,
+                apiKey = BuildConfig.NEWS_API_KEY,
                 language = FIELD_VAL_LANG,
                 sortBy = FIELD_VAL_SORT
             )
@@ -110,7 +109,7 @@ data class NewsRequest(
                 search = query,
                 pageNum = pageNum,
                 resultSize = 50,
-                apiKey = KEY,
+                apiKey = BuildConfig.NEWS_API_KEY,
                 language = FIELD_VAL_LANG,
                 sortBy = FIELD_VAL_SORT
             )
@@ -123,9 +122,6 @@ data class NewsResults(
     @SerializedName("articles") val articles: List<NewsItem> = listOf(),
     @SerializedName("status") val status: String = "",
     @SerializedName("totalResults") val totalResults: Int = 0,
-    val currentPageNum: Int = 0,
-    val nextPageNum: Int = 1,
-    val pageSize: Int = 50,
 ) {
     @Keep @Serializable @Immutable
     data class NewsItem(

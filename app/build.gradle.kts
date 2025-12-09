@@ -33,8 +33,18 @@ android {
         multiDexEnabled = true
         vectorDrawables.useSupportLibrary = true
     }
+
+
+    buildFeatures {
+        buildConfig = true
+        compose = true
+        viewBinding = true
+    }
+    val newsApiKey = project.findProperty("NEWS_API_KEY") as? String ?: error("put NEWS_API_KEY missing in gradle.properties!")
+
     buildTypes {
         debug {
+            buildConfigField("String", "NEWS_API_KEY", "\"$newsApiKey\"")
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources =  false
@@ -45,11 +55,6 @@ android {
         generateLocaleConfig = true
     }
 
-    buildFeatures {
-        buildConfig = true
-        compose = true
-        viewBinding = true
-    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
