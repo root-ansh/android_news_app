@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -60,7 +61,7 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         scope.launch {
             delay(100)
-            dashboardViewModel.onIntent(DashboardIntent.InitScreen)
+            dashboardViewModel.onIntent(DashboardIntent.InitDashboard)
         }
     }
     LaunchedEffect(Unit) {
@@ -116,17 +117,18 @@ fun SettingsScreenUI(state: DashboardState = DashboardState(), onClick: (Dashboa
                 modifier = Modifier
                     .padding(8.dp)
                     .align(Alignment.CenterHorizontally)
-                    .size(120.dp)
+                    .size(80.dp)
             ){
                 Box(Modifier
                     .fillMaxSize()
                     .background(colors.onTertiary, CircleShape))
                 Image(
                     painter = painterResource(R.drawable.ic_launcher_foreground),
+                    colorFilter = ColorFilter.tint(AppColors.orange_bright_ff8),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(4.dp)
+                        .padding(2.dp)
                         .align(Alignment.Center)
                 )
             }

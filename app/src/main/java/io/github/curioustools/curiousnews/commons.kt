@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.widget.Toast
 import androidx.annotation.Keep
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -110,7 +109,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.os.LocaleListCompat
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import coil3.compose.rememberAsyncImagePainter
@@ -221,18 +219,6 @@ sealed interface AppCommonUiActions {
     data class LaunchUsingContext(val callback: (context: Context) -> Unit) : AppCommonUiActions
     data class LaunchUsingActivity(val callback: (context: Activity?) -> Unit) : AppCommonUiActions
     data class LaunchUsingController(val callback: (NavBackStack<NavKey>)-> Unit) : AppCommonUiActions
-
-//    data class NavigateToComposable(val route:AppRoute):AppCommonUiEvent
-//    data class ShowAlertDialog(val appCommonAlertDialogType: AppCommonAlertDialogType) : AppCommonUiEvent
-//    data class NavigateToGraph(
-//        val graph: String,
-//        val route: String? = null,
-//        val popUpTo: String? = null,
-//        val inclusive: Boolean = false
-//    ) : AppCommonUiEvent
-//
-//    data object PopBackStack : AppCommonUiEvent
-//    data object HideKeyboard : AppCommonUiEvent
 }
 
 @Keep
@@ -246,10 +232,8 @@ sealed interface AppCommonBottomSheetType {
             }
         }
     }
-    data object FeedbackBottomSheet: AppCommonBottomSheetType
-    data object SelectLanguageBottomSheet: AppCommonBottomSheetType
+    data object ClearCacheBottomSheet: AppCommonBottomSheetType
     data class SelectThemeBottomSheet(val existingSelection: SharedPrefs.ThemeMode): AppCommonBottomSheetType
-    data object LogoutSheet: AppCommonBottomSheetType
 
 }
 
@@ -257,226 +241,12 @@ sealed interface AppCommonBottomSheetType {
 @Immutable
 @Serializable
 sealed interface AppCommonBottomSheetIntents{
-    data class OnSendFeedBack(val feedback: String):AppCommonBottomSheetIntents
-    data class OnLanguageSelected(val lang: AppLanguages) : AppCommonBottomSheetIntents
-    data object OnLogout : AppCommonBottomSheetIntents
+    data object OnCacheClearSelection: AppCommonBottomSheetIntents
     data class OnThemeSelected(val theme: SharedPrefs.ThemeMode) : AppCommonBottomSheetIntents
 }
 
-@Keep
-@Immutable
-@Serializable
-enum class AppLanguages(val code: String){
-    English("en"),HIN("hi");
-    companion object{
-        fun fromCode(code: String): AppLanguages {
-            return entries.find { code.contains(it.code,true) } ?: English
-        }
-
-        fun getSelectedLanguage(): AppLanguages{
-            runCatching {
-                val code = AppCompatDelegate.getApplicationLocales()[0]?.language.orEmpty().ifBlank { "en" }
-                return fromCode(code)
-            }.getOrElse { return English }
-        }
-        fun setSelectedLanguage(lang: AppLanguages){
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(lang.code)
-            )
-        }
-
-        @Deprecated("make your own specific context refresher")
-        fun refresh() {
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(getSelectedLanguage().code)
-            )
-        }
-    }
-
-}
 
 
-@Preview
-@Composable
-fun PassWordField(
-    initialValue: String = "",
-    selfFocus: FocusRequester? = null,
-    nextFocus: FocusRequester?=null,
-    onValidValueAvailable:(String, Boolean)-> Unit = { it, _ ->}
-) {
-//    val isValid = {it: String -> it.isNotBlank() &&   it.length<=16 && it.length>=8 }
-    val isValid = {it: String -> it.length<24}
-
-    val password = remember { mutableStateOf(initialValue) }
-    val passwordVisible = remember { mutableStateOf(false) }
-    val pwdFocusRequester = remember { selfFocus ?: FocusRequester() }
-    val colors = AppColors
-    val themeColors = MaterialTheme.colorScheme
-    val styles = textStylesSystem()
-    val styles2 = MaterialTheme.localTypographyClass
-
-    OutlinedTextField(
-        value = password.value,
-        onValueChange = {
-            password.value = it
-            onValidValueAvailable.invoke(it, isValid(it))
-        },
-        isError = isValid(password.value).not(),
-        visualTransformation = if (passwordVisible.value) VisualTransformation.Companion.None else PasswordVisualTransformation(),
-        leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
-        trailingIcon = {
-            if (password.value.isNotEmpty()) {
-                IconButton(onClick = { passwordVisible.value = passwordVisible.value.not() }) {
-                    Icon(
-                        if (passwordVisible.value) Icons.Default.VisibilityOff
-                        else Icons.Default.Visibility,
-                        contentDescription = ""
-                    )
-                }
-            }
-        },
-
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Companion.Password,
-            imeAction = ImeAction.Companion.Next
-        ),
-        keyboardActions = KeyboardActions(onNext = { nextFocus?.requestFocus() }),
-        modifier = Modifier.Companion
-            .fillMaxWidth()
-            .focusRequester(pwdFocusRequester),
-        shape = RoundedCornerShape(50),
-        label = { Text(text = stringResource(R.string.word_password), style = styles.labelMedium) },
-        placeholder = {
-            Text(
-                text = stringResource(R.string.word_password),
-                style = styles.bodyMedium
-            )
-        },
-        supportingText = {
-            Text(
-                text = stringResource(R.string.msg_password_login),
-                style = styles.labelMedium
-            )
-        }
-    )
-}
-
-@Preview
-@Composable
-fun EmailField(
-    initialValue: String = "",
-    selfFocus: FocusRequester? = null,
-    nextFocus: FocusRequester?=null,
-    onValidValueAvailable:(String, Boolean)-> Unit = { it, _ ->}
-) {
-    //val isValid = {it: String -> it.isNotBlank() && it.length<50 &&  Patterns.EMAIL_ADDRESS.matcher(it).matches()}
-    val isValid = {it: String -> it.length<50}
-    val email = remember { mutableStateOf(initialValue) }
-    val emailFocusRequester = remember { selfFocus ?: FocusRequester() }
-    val colors = AppColors
-    val themeColors = MaterialTheme.colorScheme
-    val styles = textStylesSystem()
-    val styles2 = MaterialTheme.localTypographyClass
-    OutlinedTextField(
-        value = email.value,
-        onValueChange = {
-            email.value = it
-            onValidValueAvailable.invoke(it, isValid(it))
-        },
-
-        isError = isValid(email.value).not(),
-        leadingIcon = { Icon(Icons.Default.AlternateEmail, contentDescription = null) },
-        trailingIcon = {
-            if (email.value.isNotEmpty()) {
-                IconButton(onClick = { email.value = "" }) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = ""
-                    )
-                }
-            }
-        },
-        modifier = Modifier.Companion
-            .fillMaxWidth()
-            .focusRequester(emailFocusRequester),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Companion.Email,
-            imeAction = ImeAction.Companion.Next
-        ),
-        keyboardActions = KeyboardActions(onNext = { nextFocus?.requestFocus() }),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-        singleLine = true,
-        label = {
-            Text(
-                text = stringResource(R.string.email_or_username),
-                style = styles.labelMedium
-            )
-        },
-        placeholder = {
-            Text(
-                text = stringResource(R.string.email_or_username),
-                style = styles.bodyMedium
-            )
-        },
-        supportingText = {
-            Text(
-                text = stringResource(R.string.email_or_username_desc),
-                style = styles.labelMedium
-            )
-        }
-    )
-}
-
-@Preview
-@Composable
-fun FeedbackField(
-    initialValue: String = "",
-    selfFocus: FocusRequester? = null,
-    nextFocus: FocusRequester?=null,
-    onValidValueAvailable:(String, Boolean)-> Unit = { it, _ ->}
-) {
-    val isValid = {it: String -> true}
-    val value = remember { mutableStateOf(initialValue) }
-    val selfFocusRequester = remember { selfFocus ?: FocusRequester() }
-    val colors = AppColors
-    val themeColors = MaterialTheme.colorScheme
-    val styles = textStylesSystem()
-    val styles2 = MaterialTheme.localTypographyClass
-    OutlinedTextField(
-        value = value.value,
-        onValueChange = {
-            value.value = it
-            onValidValueAvailable.invoke(it, isValid(it))
-        },
-
-        isError = isValid(value.value).not(),
-        leadingIcon = { Icon(Icons.Outlined.Feedback, contentDescription = null) },
-        trailingIcon = {
-            if (value.value.isNotEmpty()) {
-                IconButton(onClick = { value.value = "" }) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = ""
-                    )
-                }
-            }
-        },
-        modifier = Modifier.Companion
-            .fillMaxWidth()
-            .focusRequester(selfFocusRequester),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Companion.Email,
-            imeAction = ImeAction.Companion.Next
-        ),
-        keyboardActions = KeyboardActions(onNext = { nextFocus?.requestFocus() }),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-        singleLine = false,
-        label = { Text(text = stringResource(R.string.feedback), style = styles.labelMedium) },
-        placeholder = { Text(text = stringResource(R.string.feedback), style = styles.bodyMedium) },
-
-        )
-}
 
 
 
@@ -1052,12 +822,8 @@ fun CommonBottomSheet(
         containerColor = colors().tertiaryContainer
     ) {
         when (sheetType) {
-            is AppCommonBottomSheetType.FeedbackBottomSheet -> FeedBackSheet(
-                onDismiss,
-                onSheetActions
-            )
 
-            is AppCommonBottomSheetType.SelectLanguageBottomSheet -> SelectLanguageSheet(
+            is AppCommonBottomSheetType.ClearCacheBottomSheet -> ClearCacheBottomSheet(
 
                 onDismiss,
                 onSheetActions
@@ -1072,8 +838,6 @@ fun CommonBottomSheet(
             is AppCommonBottomSheetType.SelectThemeBottomSheet -> {
                 SelectThemeSheet(sheetType,onDismiss,onSheetActions)
             }
-
-            AppCommonBottomSheetType.LogoutSheet -> LogoutSheet(onDismiss,onSheetActions)
         }
     }
 }
@@ -1266,12 +1030,9 @@ fun String.capitaliseEachWord(forceLowercaseFirst: Boolean = true): String {
 @Composable
 fun String.toLangSpecific(): String{
     return when(this){
-        ActionModelType.DEEPLINK_FEEDBACK.name -> stringResource(R.string.feedback)
         ActionModelType.DEEPLINK_CHANGE_THEME.name -> stringResource(R.string.change_theme)
         ActionModelType.DEEPLINK_CLEAR_CACHE.name -> stringResource(R.string.clear_all_bookmarks_and_api_cache)
-        ActionModelType.SETTINGS_LOGOUT.name -> stringResource(R.string.string_signout)
-        AppLanguages.English.name -> stringResource(R.string.english)
-        AppLanguages.HIN.name -> stringResource(R.string.hindi)
+
         else -> this
     }
 }

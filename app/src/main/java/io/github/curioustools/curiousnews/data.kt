@@ -1,0 +1,242 @@
+package io.github.curioustools.curiousnews
+
+import androidx.annotation.Keep
+import androidx.compose.runtime.Immutable
+import com.google.gson.annotations.SerializedName
+import io.github.curioustools.curiousnews.AppApiService.Companion.FIELD_VAL_LANG
+import io.github.curioustools.curiousnews.AppApiService.Companion.FIELD_VAL_SORT
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import retrofit2.Call
+import retrofit2.http.Field
+import retrofit2.http.GET
+import retrofit2.http.Query
+import java.text.SimpleDateFormat
+import java.util.TimeZone
+import javax.inject.Inject
+
+
+interface AppApiService {
+    @GET(PATH)
+    fun getArticles(
+        @Query(FIELD_Q) search: String,
+        @Query(FIELD_PAGE) pageNum: Int,
+        @Query(FIELD_PAGE_SIZE) resultSize: Int,
+        @Query(FIELD_API_KEY) apiKey: String,
+        @Query(FIELD_LANGUAGE) language: String,
+        @Query(FIELD_SORT) sortBy: String,
+    ): Call<NewsResults>
+
+    companion object {
+        const val BASE = "https://newsapi.org" + "/"
+        const val PATH = "v2/everything"
+        const val FIELD_Q = "q"
+        const val FIELD_PAGE = "page"
+        const val FIELD_API_KEY = "apiKey"
+        const val FIELD_PAGE_SIZE = "pageSize"
+        const val FIELD_LANGUAGE = "language"
+        const val FIELD_SORT = "sortBy"
+        const val FIELD_VAL_SORT = "publishedAt"
+        const val FIELD_VAL_LANG = "en"
+
+
+    }
+}
+
+
+class AppApiRepoImpl @Inject constructor (private val apiService: AppApiService): AppApiRepo {
+    override suspend fun getAllArticles(request: NewsRequest): BaseResponse<NewsResults> {
+        return  apiService.getArticles(
+            search = request.search,
+            pageNum = request.pageNum,
+            resultSize = request.resultSize,
+            apiKey = request.apiKey,
+            language = request.language,
+            sortBy = request.sortBy
+        ).executeAndUnify()
+    }
+
+}
+interface AppApiRepo{
+    suspend fun getAllArticles(request: NewsRequest): BaseResponse<NewsResults>
+}
+
+
+class ArticlesUseCase @Inject constructor(private val repo: AppApiRepo) :
+    BaseUseCase<BaseResponse<NewsResults>, NewsRequest>() {
+    override suspend fun execute(params: NewsRequest): BaseResponse<NewsResults> {
+        return repo.getAllArticles(params)
+    }
+
+}
+
+
+
+
+abstract class BaseUseCase<out Result, in Params> {
+    abstract suspend fun execute(params: Params): Result
+    suspend fun executeAsync(params: Params):Result{
+        return withContext(Dispatchers.IO) {
+            execute(params)
+        }
+    }
+}
+
+
+@Keep @Serializable @Immutable
+data class NewsRequest(
+    val search: String,
+    val  pageNum: Int = 1,
+    val resultSize: Int = 10,
+    val  apiKey: String,
+    val  language: String,
+    val  sortBy: String
+){
+    companion object{
+        private const val  KEY = "bc45ff3e7dfe4362bb18a14ca3ad2c5b"////BuildConfig.VERSION_NAME,//TODO BUILDCONFIG
+        fun all(pageNum: Int = 1): NewsRequest {
+            return NewsRequest(
+                search = "Business",
+                pageNum = pageNum,
+                resultSize = 50,
+                apiKey = KEY,
+                language = FIELD_VAL_LANG,
+                sortBy = FIELD_VAL_SORT
+            )
+        }
+        fun query(query: String,pageNum: Int = 1): NewsRequest {
+            return NewsRequest(
+                search = query,
+                pageNum = pageNum,
+                resultSize = 50,
+                apiKey = KEY,
+                language = FIELD_VAL_LANG,
+                sortBy = FIELD_VAL_SORT
+            )
+        }
+    }
+}
+
+@Keep @Serializable @Immutable
+data class NewsResults(
+    @SerializedName("articles") val articles: List<NewsItem> = listOf(),
+    @SerializedName("status") val status: String = "",
+    @SerializedName("totalResults") val totalResults: Int = 0,
+    val currentPageNum: Int = 0,
+    val nextPageNum: Int = 1,
+    val pageSize: Int = 50,
+) {
+    @Keep @Serializable @Immutable
+    data class NewsItem(
+        @SerializedName("author") val author: String? = null,
+        @SerializedName("content") val content: String = "",
+        @SerializedName("description") val description: String = "",
+        @SerializedName("publishedAt") val publishedAt: String = "",
+        @SerializedName("source") val source: Source = Source(),
+        @SerializedName("title") val title: String = "",
+        @SerializedName("url") val url: String = "",
+        @SerializedName("urlToImage") val urlToImage: String = "",
+        val cachedId: String = "unset",
+        val isLoading: Boolean = false,
+        val isBookmarked: Boolean = false,
+    ) {
+        fun publishedOn(): String {
+            return runCatching {
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                inputFormat.timeZone = TimeZone.getTimeZone("UTC")
+                val outputFormat = SimpleDateFormat("dd MMM yyyy, h:mm a")
+
+                val date = inputFormat.parse(publishedAt)
+                outputFormat.format(date!!)
+            }.getOrElse { publishedAt }
+        }
+        fun info() = "From: ${source.name} • Published on: ${publishedOn()}"
+
+    }
+
+    @Keep @Serializable @Immutable
+    data class Source(@SerializedName("name") val name: String = "")
+
+    companion object{
+        fun loading() =
+            NewsResults(
+                articles = (1..5).map {  NewsItem(isLoading = true) }
+            )
+    }
+
+}
+
+/**
+{
+"status": "ok",
+"totalResults": 61568,
+"articles": [
+{
+"source": {
+"id": null,
+"name": "The Daily Dot"
+},
+"author": "Susan LaMarca",
+"title": "“Just a marketing ploy”: People say the illusion is over after an air fryer truther’s video goes viral",
+"description": "A clip revealing the inner workings of an air fryer had people running to check if their most magical appliance was also pretty much just a single electric burner.\n\n\nTikToker @welcometheekidd‘s air fryer truther clip from Nov. 19, 2025, went viral with 1.1 mi…",
+"url": "https://www.dailydot.com/news/what-the-inside-of-an-air-fryer-really-looks-like/",
+"urlToImage": "https://uploads.dailydot.com/2025/12/what-does-air-fryer-inside-look-like.png?auto=compress&fm=png&w=2000&h=1000",
+"publishedAt": "2025-12-08T11:30:00Z",
+"content": "A clip revealing the inner workings of an air fryer had people running to check if their most magical appliance was also pretty much just a single electric burner.\r\nTikToker @welcometheekidds air fry… [+2176 chars]"
+},
+{
+"source": {
+"id": null,
+"name": "Mediagazer.com"
+},
+"author": null,
+"title": "After the building fire, Hong Kong summoned AFP, FT, NYT, AP, Bloomberg, and WSJ journalists, telling them to avoid \"trouble making\", and arrested a commentator (Committee to Protect Journalists)",
+"description": "Committee to Protect Journalists:\nAfter the building fire, Hong Kong summoned AFP, FT, NYT, AP, Bloomberg, and WSJ journalists, telling them to avoid “trouble making”, and arrested a commentator  —  Chinese and Hong Kong authorities must immediately stop hara…",
+"url": "https://mediagazer.com/251208/p5",
+"urlToImage": "https://cpj.org/wp-content/uploads/2025/12/AFP__20251203__86X64G3__v3__HighRes__HongKongChinaFire-1.jpg?fit=4096,4096&strip=all&quality=80",
+"publishedAt": "2025-12-08T11:30:00Z",
+"content": "Mediagazer presents the day's must-read media news on a single page.\r\nThe media business is in tumult: from the production side to\r\nthe distribution side, new technologies are upending the industry.\r… [+416 chars]"
+},
+{
+"source": {
+"id": null,
+"name": "The Star Online"
+},
+"author": "The Star Online",
+"title": "Senator proposes RM100mil fine for social media platforms violating minimum age limit",
+"description": "KUALA LUMPUR: A senator proposed that social media service providers be fined RM100mil if they fail to comply with the minimum age policy of 16 years for opening new accounts. Read full story",
+"url": "https://www.thestar.com.my/news/nation/2025/12/08/senator-proposes-rm100mil-fine-for-social-media-platforms-violating-minimum-age-limit",
+"urlToImage": "https://apicms.thestar.com.my/uploads/images/2025/12/08/3661302.jpg",
+"publishedAt": "2025-12-08T11:29:00Z",
+"content": "KUALA LUMPUR: A senator proposed that social media service providers be fined RM100mil if they fail to comply with the minimum age policy of 16 years for opening new accounts.\r\nDatuk Seri S. Vell Paa… [+2147 chars]"
+},
+{
+"source": {
+"id": null,
+"name": "Hospitality Net"
+},
+"author": "STR",
+"title": "STR Weekly Insights: 16-29 November 2025",
+"description": "All financial figures in U.S. dollar constant currency. Highlights U.S. RevPAR decrease all due to hurricane markets Fortnight U.S. occupancy flat, ADR up, excluding hurricane markets Thanksgiving Day room demand second highest ever Global RevPAR up...",
+"url": "https://www.hospitalitynet.org/news/4130091.html",
+"urlToImage": "https://www.hospitalitynet.org/HN-icon.jpg",
+"publishedAt": "2025-12-08T11:28:00Z",
+"content": "All financial figures in U.S. dollar constant currency.\r\nHighlights\r\n<ul><li>U.S. RevPAR decrease all due to hurricane markets</li><li>Fortnight U.S. occupancy flat, ADR up, excluding hurricane marke… [+10843 chars]"
+},
+{
+"source": {
+"id": null,
+"name": "Thefly.com"
+},
+"author": null,
+"title": "Repsol, HitecVision to merge joint venture with TotalEnergies' UK business",
+"description": "See the rest of the story here.\n\nthefly.com provides the latest financial news as it breaks. Known as a leader in market intelligence, The Fly's real-time, streaming news feed keeps individual investors, professional money managers, active traders, and corpor…",
+"url": "https://thefly.com/permalinks/entry.php/id4251757/REPYY;TTE-Repsol-HitecVision-to-merge-joint-venture-with-TotalEnergies-UK-business",
+"urlToImage": "https://thefly.com/images/meta/hotstocks.jpg",
+"publishedAt": "2025-12-08T11:26:43Z",
+"content": "Earnings calls, analyst events, roadshows and more"
+}
+]
+}
+ */

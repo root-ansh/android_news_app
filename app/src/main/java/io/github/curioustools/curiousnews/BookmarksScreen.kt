@@ -18,8 +18,7 @@ import androidx.navigation3.runtime.NavKey
 
 @Composable
 fun BookmarksScreen(
-    backStack: NavBackStack<NavKey>,
-    dashboardViewModel: DashboardViewModel
+    state: DashboardState, onClick: (DashboardIntent) -> Unit
 ){
     Column(
         Modifier.Companion

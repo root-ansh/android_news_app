@@ -12,6 +12,7 @@ import androidx.annotation.WorkerThread
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,12 +35,10 @@ import okhttp3.Protocol
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.CallAdapter
 import retrofit2.Converter
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.POST
 import timber.log.Timber
 import java.io.IOException
 import java.net.CookieManager
@@ -59,8 +58,10 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.also
 import kotlin.collections.forEach
-import kotlin.jvm.java
 import kotlin.let
+
+
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -79,19 +80,33 @@ object AppDI {
         } else {
             getMyUnsafeOkHttpBuilderPROD(null, null, ctx).build()
         }
-        return getRetrofitBuilder(AppApis.BASE, client).addScalerConvertor().addGsonConvertor().build()
+        return getRetrofitBuilder(AppApiService.BASE, client).addScalerConvertor().addGsonConvertor().build()
     }
 
-    @Provides
-    fun getWordPressLoginApi(retrofit: Retrofit): AppApis {
-        return retrofit.create(AppApis::class.java)
-    }
+
 //    @Provides
 //    fun providesLoginUseCase(@ApplicationContext context: Context): LoginUseCase{
 //        return DI.getLoginUseCase(context)
 //    }
 
 }
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class AppApisDI{
+    @Binds
+    abstract fun bindRepo(repoImpl: AppApiRepoImpl): AppApiRepo
+
+
+    companion object{
+        @Provides
+        fun getAppApiService(retrofit: Retrofit): AppApiService {
+            return retrofit.create(AppApiService::class.java)
+        }
+    }
+
+}
+
 
 //todo fix
 
@@ -250,7 +265,7 @@ fun OkHttpClient.Builder.addHeaderInterceptor(appHeaders: HashMap<String, String
 }
 
 fun OkHttpClient.Builder.addInternetCheckInterceptor(context: Context): OkHttpClient.Builder {
-    addInterceptor(InternetCheckInterceptor(context))
+    //addInterceptor(InternetCheckInterceptor(context))
     return this
 }
 
@@ -340,21 +355,13 @@ class InternetCheckInterceptor(private val context: Context? = null) : Intercept
         fun isConnectedToInternetProvider(ctx: Context): Boolean {
             val cm = ctx.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             cm ?: return false
-            return if (isAndroidGTEquals23M()) {
-                val currentNetwork = cm.activeNetwork ?: return false
-                val capabilities = cm.getNetworkCapabilities(currentNetwork) ?: return false
-                when {
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                    else -> false
-                }
-            }
-            else {
-                val currentNetworkINFO = cm.activeNetworkInfo ?: return false
-                currentNetworkINFO.isConnectedOrConnecting
-                        || currentNetworkINFO.type == ConnectivityManager.TYPE_WIFI
-                        || currentNetworkINFO.type == ConnectivityManager.TYPE_MOBILE
+            val currentNetwork = cm.activeNetwork ?: return false
+            val capabilities = cm.getNetworkCapabilities(currentNetwork) ?: return false
+            return when {
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+                else -> false
             }
         }
 
@@ -415,20 +422,48 @@ enum class BaseStatus(val code: Int, val msg: String) {
 fun isAndroidGTEquals23M() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 
 
-interface AppApis {
-    @POST(PATH)
-    @FormUrlEncoded
-    fun login(
-        @Field("username") name: String,
-        @Field("password") pwd: String
-    ): retrofit2.Call<Any?>
+/**
+ * Retrofit provides a response of format Response(isSuccessful:True/False, body:T/null,...)
+ * it treats all failures as null . this Response object on its own is enough to know about the
+ * json response, but for convenience we can use a unified sealed class for handling high level
+ * distinctions,such as success, failure, token expire failure etc.
+ * */
+fun <T> retrofit2.Call<T>.executeAndUnify(): BaseResponse<T> {
+    return try {
+        val response: Response<T?> = this.execute()
 
-    companion object {
-        //private const val POSTS_URL = "http://www.varabhaya.com/wp-json/custom-plugin/login"
-        const val BASE = "https://www.varabhaya.com" + "/"
-        const val PATH = "wp-json/custom-plugin/login"
+        when {
+            response.isSuccessful -> {
+                when (val body = response.body()) {
+                    null -> BaseResponse.Failure(body, BaseStatus.APP_NULL_RESPONSE_BODY)
+                    else -> BaseResponse.Success(body)
+                }
+            }
+            else -> {
+                val code = response.code()
+                val body = response.body()
+                val status = BaseStatus.getStatusOrDefault(code)
+                val exception = Exception(status.msg)
+                val resp = BaseResponse.Failure(body, status, exception)
+                resp.exception = exception
+                resp
+            }
+        }
     }
+    catch (t: Throwable) {
+        BaseResponse.Failure(null, BaseStatus.getStatusFromException(t), t)
+    }
+
 }
+
+fun <DTO, RESP> BaseResponse<DTO>.convertTo(successConvertor: (DTO) -> RESP): BaseResponse<RESP> {
+    return when (this) {
+        is BaseResponse.Failure -> BaseResponse.Failure(null, this.status,this.exception)
+        is BaseResponse.Success -> BaseResponse.Success(successConvertor.invoke(this.body))
+    }
+
+}
+
 
 
 

@@ -109,6 +109,7 @@
     <string name="search_for_an_article">Search for an article</string>
     <string name="bookmark_this_item">Bookmark this item</string>
     <string name="share">Share</string>
+    <string name="search_by_article_title_subtitle_author_or_label">Search by article title, subtitle, author or label</string>
 
 
 </resources>

@@ -16,16 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -43,77 +39,28 @@ import kotlin.collections.mapIndexed
 import kotlin.ranges.coerceAtMost
 import kotlin.to
 
-
 @Preview
 @Composable
-fun FeedBackSheet(
+fun ClearCacheBottomSheet(
     onDismiss: () -> Unit = {},
     onBottomSheetEvent: (AppCommonBottomSheetIntents) -> Unit = {}
 ) {
-    var feedback by remember { mutableStateOf("") }
-    var enabled by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        InternalIcon(config = InternalIconConfig.res2(R.drawable.ic_launcher_foreground))
-        TitleText(text = stringResource(R.string.share_feedback))
-        SubtitleText(text = stringResource(R.string.having_any_issues_with_app_let_us_know))
-        FeedbackField { string, bool -> feedback = string; enabled = bool }
-        AppPrimaryButton(
-            isEnabled = enabled,
-            text = stringResource(R.string.share_feedback),
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {  onBottomSheetEvent.invoke(AppCommonBottomSheetIntents.OnSendFeedBack(feedback)) }
-        )
-        Spacer(
-            Modifier
-                .fillMaxWidth()
-                .height(36.dp)
-        )
-    }
-
-}
-
-@Preview
-@Composable
-fun SelectLanguageSheet(
-    onDismiss: () -> Unit = {},
-    onBottomSheetEvent: (AppCommonBottomSheetIntents) -> Unit = {}
-) {
-    val selected = AppLanguages.getSelectedLanguage()
-    val all = AppLanguages.entries
-
-    val onClick = { lang: AppLanguages ->
-        onBottomSheetEvent.invoke(AppCommonBottomSheetIntents.OnLanguageSelected(lang))
+    val onClick = { b:Boolean ->
+        if(b){onBottomSheetEvent.invoke(AppCommonBottomSheetIntents.OnCacheClearSelection)}
         onDismiss.invoke()
     }
-
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        InternalIcon(config = InternalIconConfig.vector2(Icons.Default.Translate), iconTint = AppColors.black)
-        TitleText(text = stringResource(R.string.change_language))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            all.map {
-                if(it == selected){
-                    AppPrimaryButton(modifier = Modifier.weight(1f), text = it.name.toLangSpecific()){onClick.invoke(it)}
-                }
-                else{
-                    AppSecondaryButton(modifier = Modifier.weight(1f), text = it.name.toLangSpecific()){onClick.invoke(it)}
-                }
-            }
-        }
-        Spacer(Modifier
-            .fillMaxWidth()
-            .height(36.dp))
+        InternalIcon(config = InternalIconConfig.vector2(Icons.AutoMirrored.Default.Logout), iconTint = AppColors.black)
+        TitleText(text = stringResource(R.string.logout_title))
+        SubtitleText(text = stringResource(R.string.logout_subtitle))
+        AppPrimaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.string_signout)){onClick.invoke(true)}
+        AppSecondaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.dismiss)){onClick.invoke(false)}
+
+        Spacer(Modifier.fillMaxWidth().height(36.dp))
     }
 
 }
@@ -189,39 +136,6 @@ fun SelectThemeSheet(
 
 
 
-
-@Preview
-@Composable
-fun LogoutSheet(
-    onDismiss: () -> Unit = {},
-    onBottomSheetEvent: (AppCommonBottomSheetIntents) -> Unit = {}
-) {
-
-    val onClick = { b:Boolean ->
-        if(b){onBottomSheetEvent.invoke(AppCommonBottomSheetIntents.OnLogout)}
-        onDismiss.invoke()
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        InternalIcon(config = InternalIconConfig.vector2(Icons.AutoMirrored.Default.Logout), iconTint = AppColors.black)
-        TitleText(text = stringResource(R.string.logout_title))
-        SubtitleText(text = stringResource(R.string.logout_subtitle))
-
-        AppPrimaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.string_signout)){onClick.invoke(true)}
-        AppSecondaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.dismiss)){onClick.invoke(false)}
-
-        Spacer(Modifier
-            .fillMaxWidth()
-            .height(36.dp))
-    }
-
-}
 @Composable
 fun TitleText(text: String, modifier: Modifier = Modifier) {
     Text(text = text, style = textStyles().titleLarge, modifier = modifier.padding(horizontal = 16.dp), textAlign = TextAlign.Center)
@@ -271,7 +185,7 @@ fun BuildVersion(name: String = "1.2.3",code:String = "1234",isDebug:Boolean = t
 
 @Preview
 @Composable
-fun SettingItems(modifier: Modifier = Modifier, state: DashboardState = DashboardState(isLoggedIn = true), onClick: (DashboardIntent) -> Unit = {}){
+fun SettingItems(modifier: Modifier = Modifier, state: DashboardState = DashboardState(), onClick: (DashboardIntent) -> Unit = {}){
     @Composable
     fun buildSettingItemList(state: DashboardState): MutableList<Pair<String, List<ActionModel>>> {
         val finalList = mutableListOf<Pair<String, List<ActionModel>>>()
@@ -287,12 +201,7 @@ fun SettingItems(modifier: Modifier = Modifier, state: DashboardState = Dashboar
                 ActionModel("", "", ActionModelType.DEEPLINK_CHANGE_THEME),
             )
         )
-        finalList.add(
-            stringResource(R.string.about_this_app) to listOf(
-                ActionModel("", "", ActionModelType.DEEPLINK_FEEDBACK),
-                //todo rate us
-            )
-        )
+
         return finalList
     }
 
@@ -321,6 +230,7 @@ fun SettingItems(modifier: Modifier = Modifier, state: DashboardState = Dashboar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(shape)
                         .clickable { onClick.invoke(DashboardIntent.QuickLinkClick(model)) }
                         .padding(bottom = 1.dp)
                         .background(colors.tertiaryContainer, shape)
