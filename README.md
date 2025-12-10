@@ -1,5 +1,5 @@
 # CuriousNews
-![app/src/main/ic_launcher-playstore.png](app_icon)
+![app/src/main/ic_launcher-playstore.png]()
 
 
 ## Project Configuration
@@ -7,9 +7,19 @@
 - MVVM Clean Architecture With Usecase, Repo, Viewmodel, State, Hilt, Flows, Room Db , Nav3, Retrofit And Jetpack Compose
 
 ## Project Resources:
-- video : 
-- apk : 
 - screenshots: 
+<p> 
+<img src="media/light1.jpg" height="400" width="200" alt="image">
+<img src="media/light2.jpg" height="400" width="200" alt="image">
+<img src="media/light3.jpg" height="400" width="200" alt="image">
+<img src="media/light4.jpg" height="400" width="200" alt="image">
+<img src="media/light5.jpg" height="400" width="200" alt="image">
+<img src="media/dark_1.jpg" height="400" width="200" alt="image">
+<img src="media/dark_2.jpg" height="400" width="200" alt="image">
+<img src="media/dark_3.jpg" height="400" width="200" alt="image">
+<img src="media/dark_4.jpg" height="400" width="200" alt="image">
+<img src="media/dark_5.jpg" height="400" width="200" alt="image">
+</p>  
 
 ## Checklist
 
