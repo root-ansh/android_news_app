@@ -33,7 +33,7 @@ data class NewsRequest(
             return NewsRequest(
                 search = query,
                 pageNum = pageNum,
-                resultSize = 50,
+                resultSize = 10,
                 apiKey = BuildConfig.NEWS_API_KEY,
                 language = NewsApiService.FIELD_VAL_LANG,
                 sortBy = NewsApiService.FIELD_VAL_SORT

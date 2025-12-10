@@ -30,6 +30,7 @@ import io.github.curioustools.curiousnews.presentation.dashboard.DashboardIntent
 import io.github.curioustools.curiousnews.presentation.dashboard.DashboardState
 import io.github.curioustools.curiousnews.presentation.GradientCircularProgressIndicator
 import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.commons.log
 import io.github.curioustools.curiousnews.presentation.colors
 import io.github.curioustools.curiousnews.presentation.textStyles
 import kotlinx.coroutines.FlowPreview
@@ -42,8 +43,9 @@ fun ArticlesScreen(state: DashboardState, onClick: (DashboardIntent) -> Unit){
     val entries = if(state.allNewsLoading)state.loadingResults else state.allNewsResults
     val listState = rememberLazyListState()
 
-
     LaunchedEffect(listState, entries.articles.size) {
+        log("launched effect called")
+
         var previousLastVisibleIndex = -1
 
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -58,11 +60,13 @@ fun ArticlesScreen(state: DashboardState, onClick: (DashboardIntent) -> Unit){
                 if (!isScrollingDown) return@collect
                 val isNearEnd = lastVisibleIndex >= totalItems - 3
                 val canRequestMore = !state.allNewsPaginationLoading && !state.allNewsLoading && totalItems > 0
+                log("pagination: can isNear End: $isNearEnd , canreq more : $canRequestMore")
                 if (isNearEnd && canRequestMore) {
                     onClick(DashboardIntent.OnRequestAllResults(AllResultsRequestType.PAGINATION))
                 }
             }
     }
+
 
 
     LazyColumn (Modifier,listState) {
@@ -137,6 +141,9 @@ fun ArticlesScreen(state: DashboardState, onClick: (DashboardIntent) -> Unit){
                 .height(120.dp))
         }
     }
+
+
+
 }
 
 

@@ -257,32 +257,32 @@ private data object MyFonts{
         certificates = R.array.com_google_android_gms_fonts_certs
     )
     val CustomFontNormal = FontFamily(Font(
-        googleFont = GoogleFont("Comfortaa"),
+        googleFont = GoogleFont("Roboto Slab"),
         fontProvider = provider,
         weight =  FontWeight.Normal,
     ))
     val CustomFontMedium = FontFamily(Font(
-        googleFont = GoogleFont("Comfortaa"),
+        googleFont = GoogleFont("Roboto Slab"),
         fontProvider = provider,
         weight =  FontWeight.Medium,
     ))
     val CustomFontSemiBold = FontFamily(Font(
-        googleFont = GoogleFont("Comfortaa"),
+        googleFont = GoogleFont("Roboto Slab"),
         fontProvider = provider,
         weight =  FontWeight.SemiBold,
     ))
     val CustomFontBold = FontFamily(Font(
-        googleFont = GoogleFont("Comfortaa"),
+        googleFont = GoogleFont("Roboto Slab"),
         fontProvider = provider,
         weight =  FontWeight.Bold,
     ))
 
     val DisplayFont = FontFamily(Font(
-            googleFont = GoogleFont("Comfortaa"),
+            googleFont = GoogleFont("Roboto Slab"),
             fontProvider = provider,
         ))
     val ContentFont = FontFamily(Font(
-        googleFont = GoogleFont("Comfortaa"),
+        googleFont = GoogleFont("Roboto Slab"),
         fontProvider = provider,
     ))
 }

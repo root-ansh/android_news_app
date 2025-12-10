@@ -14,7 +14,6 @@ class MainApp: Application() {
         super.onCreate()
         if (isDebugApp()) {
             Timber.plant(Timber.DebugTree())
-            Stetho.initializeWithDefaults(this)
         }
     }
 }

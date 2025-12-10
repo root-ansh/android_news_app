@@ -54,9 +54,14 @@ class DashboardViewModel @Inject constructor(
     private var lastAllResultsRequest: AllResultsRequestType? = null
 
     fun onIntent(intent: DashboardIntent){
+        log("Recieived intent: $intent")
         when(intent){
             is DashboardIntent.OnRequestAllResults -> {
-                if(lastAllResultsRequest!= AllResultsRequestType.FRESH) requestDashboard(intent.requestType)
+                if(intent.requestType!= AllResultsRequestType.FRESH) requestDashboard(intent.requestType)
+                else if(lastAllResultsRequest!= AllResultsRequestType.FRESH) requestDashboard(intent.requestType)
+                else{
+                    log("duplicate FRESH Request. ignoring. last = $lastAllResultsRequest, current= ${intent.requestType}")
+                }
             }
             is DashboardIntent.OnArticleSearchRequest ->requestSearch(intent.query)
             is DashboardIntent.ActionClicked -> {
@@ -125,6 +130,7 @@ class DashboardViewModel @Inject constructor(
                 else it.copy(allNewsLoading = true, allNewsPaginationLoading = false)
             }
             runCatching {
+                if (requestType== AllResultsRequestType.PAGINATION) delay(500)
                 val curRequest = NewsRequest.all(_state.value.allNewsRequest.pageNum+1)
                 val data = newsListUseCase.executeAsync(NewsListUseCase.Params(curRequest,curRequest.pageNum==1))
                 log("test : received result : items =   ${data.body.articles.size}")
