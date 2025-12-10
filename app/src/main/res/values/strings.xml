@@ -1,102 +1,13 @@
 <resources>
     <string name="app_name">CuriousNews</string>
 
-    <string name="varabhaya_notif_channel" translatable="false">varabhaya_fcm</string>
-
-    <string name="lorem_hindi_title">मानव जीवन का परम् लक्ष्य</string>
-    <string name="lorem_mix_details">The next class for  </string>
-
-    <string name="lorem_3_words">A Big Word</string>
-    <string name="more_info">More info</string>
-    <string name="string_t_and_c_details">
-        I declare that all talents, skills, or acknowledgments gained during the Prout Basic Course
-        provided by PROUTIST UNIVERSAL will be utilized by me for purposes no other than promoting
-        the organizational programs dedicated to the Good and Happiness of All. ” Any misuse of
-        recorded and stored/written lectures or contents are not allowed. The host reserves all
-        rights to take legal action. T&amp;C (Given in the form) Apply.\n\n
-        "मैं सर्व विदित करता हूँ कि प्राउटिष्ट यूनिवर्सल द्वारा संचालित प्रउत मूलभूत पाठ्यक्रम से प्राप्त शिक्षा, कुशलता अथवा
-        अभिज्ञता का मैं मात्र प्राउटिष्ट यूनिवर्सल द्वारा संचालित सर्वजन हितार्थ सर्वजन सुखार्थ को समर्पित प्रउत आदर्शों के प्रसार
-        कार्यक्रमों के अलावा अन्य प्रकार से किसी रूप में व्यवहार नहीं करूंगा/करूंगी । इन दर्ज एवं संग्रहित अथवा लिखित
-        व्याख्यानों / सामग्रियों का किसी भी प्रकार से दुरुपयोग करने की अनुमति किसी को नहीं है । कार्यक्रम प्रबंधकों के पास
-        कानूनी अधिकार सुरक्षित हैं ।" \n\n
-        I Agree *
-    </string>
-
-    <string name="string_login_success">
-        You have successfully logged in. Enjoy all the sections and videos of the app
-    </string>
-    <string name="string_signout">Logout</string>
-    <string name="text_change_lang">Read in hindi(हिंदी) </string>
-    <string name="word_login">Login</string>
-    <string name="string_login_msg">Tap to Fill the below details and press \"Login\" if you already have an account.</string>
-    <string name="word_email">email</string>
-    <string name="word_password">password</string>
-    <string name="word_or">OR</string>
-    <string name="word_register">Register</string>
-    <string name="string_info_register">Tap to Create a new account</string>
-    <string name="text_username">User name</string>
-    <string name="msg_password_login">Password Must match the one you created on varabhaya.com</string>
-
-    <string name="string_q_forgot_password">Forgot Password ?</string>
-    <string name="string_reset_info">Tap and Enter your email below to get a reset instructions on your email</string>
-    <string name="string_get_reset_link">Get Reset Link</string>
-
-
-    <string name="word_varabhaya">Varabhaya</string>
-    <string name="message_loading">Loading, Please Wait</string>
-    <string name="word_welcome">Welcome!</string>
-    <string name="welcome_msg">Welcome. Please Login to continue</string>
-    <string name="string_generic_error">An Error Occurred. Please retry after sometime. Exiting</string>
-    <string name="string_reset_success">Reset email send successfully. Please check your email for further instructions.</string>
-    <string name="string_registration_success">Registration Successful! You can now access all the suctions of the app</string>
-    <string name="string_almost_done">Almost Done...</string>
-    <string name="string_logout_success">You have been successfully logged Out!</string>
-    <string name="tnc_error">Please accept the terms and conditions to continue</string>
-    <string name="auth_generic_error2">Please fix the above errors to continue</string>
-    <string name="signing_placeholder">Signing You In, Please Wait...</string>
-    <string name="string_please_wait">Please Wait...</string>
-    <string name="string_empty_folder">This folder is empty</string>
-    <string name="string_latest_events">Latest Events</string>
-    <string name="refresh">Refresh</string>
-    <string name="string_all_events">All Events</string>
-    <string name="string_rec_videos">Recorded Videos</string>
     <string name="string_my_profile">My Profile</string>
-    <string name="string_event_upcoming">Upcoming</string>
-    <string name="event_archive">Archived</string>
-    <string name="string_event_corrupted">Varabhaya</string>
-    <string name="string_msg_in_dev_todo">This feature is currently in development</string>
-    <string name="notif_default_title">varabhaya!</string>
-    <string name="notif_default_details">new event is available. kindly open app for more details</string>
-    <string name="email_or_username">Email or Username</string>
-    <string name="email_or_username_desc">Please enter your email address or username for login</string>
-    <string name="varabhaya_content_migration_message">Find prout sessions and other content related to varabhaya here.</string>
-    <string name="prout_now">Prout Now!!</string>
-    <string name="prout_org">Prout.org</string>
-    <string name="quick_links">Quick Links</string>
-    <string name="msg_logged_in">Hello %1$s.\nContinue Your spritual learnings with these videos</string>
-    <string name="msg_logged_out">Welcome User!\nStart Your Spiritual learning by logging into your account</string>
-    <string name="app_update_available_tap_to_update_your_app">App Update available. Tap to update your app</string>
-    <string name="update_now">Update Now</string>
-    <string name="more_options">More options</string>
-    <string name="view_all">View All</string>
-    <string name="feedback">Feedback</string>
-    <string name="change_language">Change Language</string>
+
     <string name="settings">Settings</string>
-    <string name="english">English</string>
-    <string name="hindi">"Hindi "</string>
-    <string name="having_any_issues_with_app_let_us_know">Having any issues with App? let us know</string>
     <string name="share_feedback">Share Feedback</string>
     <string name="dismiss">Dismiss</string>
-    <string name="str_16_points">16 Points</string>
-    <string name="certification_exam">Certification Exam</string>
-    <string name="learning">Learning</string>
-    <string name="hello_user">Welcome %1$s!</string>
-    <string name="prout_text">Progressive Utilisation Theory (P.R.O.U.T)</string>
     <string name="change_theme">Change Theme</string>
-    <string name="about_this_app">About this App</string>
-    <string name="profile_settings">Profile Settings</string>
-    <string name="logout_title">Are you sure you want to logout?</string>
-    <string name="logout_subtitle">You can log back in anytime to access your favourite videos</string>
+
     <string name="msg_theme_light">This will set your app\'s theme to light</string>
     <string name="msg_theme_dark">This will set your app\'s theme to dark</string>
     <string name="msg_theme_auto">This will set your app\'s theme synced to system theme</string>
@@ -105,11 +16,22 @@
     <string name="your_saved_bookmarks">Your Saved Bookmarks</string>
     <string name="all_articles">All Articles</string>
     <string name="clear_all_bookmarks_and_api_cache">Clear All Bookmarks and api cache</string>
+    <string name="cache_cleared">All bookmarks and news cache cleared successfully</string>
     <string name="search">Search</string>
     <string name="search_for_an_article">Search for an article</string>
     <string name="bookmark_this_item">Bookmark this item</string>
     <string name="share">Share</string>
     <string name="search_by_article_title_subtitle_author_or_label">Search by article title, subtitle, author or label</string>
+    <string name="clear_cache">Clear Cache?</string>
+    <string name="clearn_cache_msg">All your Bookmarks and Saved Articles will be removed.</string>
+    <string name="word_continue">Continue</string>
+    <string name="searc_new">Enter something to start a search</string>
+    <string name="search_no_results">" No Results found"</string>
+    <string name="search_results">%1$d items available for your query \'%2$s\'</string>
+    <string name="no_articles_found">No articles Found !</string>
+    <string name="retry">Retry</string>
+    <string name="read_summary">Read Summary</string>
+    <string name="read_in_web">Read in web</string>
 
 
 </resources>

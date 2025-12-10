@@ -56,7 +56,7 @@ interface NewsApiCache {
 fun NewsResults.NewsItem.toEntity() = NewsEntity(
     author = author.orEmpty(),
     content = content,
-    description = description,
+    description = description.orEmpty(),
     publishedAt = publishedAt,
     source = source.name,
     title = title.ifBlank { UUID.randomUUID().toString() },

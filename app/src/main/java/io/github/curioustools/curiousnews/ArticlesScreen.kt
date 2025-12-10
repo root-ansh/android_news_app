@@ -20,8 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArtTrack
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkAdded
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,10 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -51,8 +53,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import io.github.curioustools.curiousnews.AppButtonConfig.AppButtonType.ROUND_PRIMARY
-import io.github.curioustools.curiousnews.AppButtonConfig.InternalIconConfig
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -60,7 +60,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @OptIn(FlowPreview::class)
 @Composable
 fun ArticlesScreen(state: DashboardState, onClick: (DashboardIntent) -> Unit){
-    val entries = if(state.isAllNewsLoading)state.loadingResults else state.allNewsResults
+    val entries = if(state.allNewsLoading)state.loadingResults else state.allNewsResults
     val listState = rememberLazyListState()
 
     LaunchedEffect(listState, entries.articles.size) {
@@ -77,9 +77,9 @@ fun ArticlesScreen(state: DashboardState, onClick: (DashboardIntent) -> Unit){
 
                 if (!isScrollingDown) return@collect
                 val isNearEnd = lastVisibleIndex >= totalItems - 3
-                val canRequestMore = !state.allNewsPaginationLoading && !state.isAllNewsLoading && totalItems > 0
+                val canRequestMore = !state.allNewsPaginationLoading && !state.allNewsLoading && totalItems > 0
                 if (isNearEnd && canRequestMore) {
-                    onClick(DashboardIntent.InitDashboard(paginationCall = true))
+                    onClick(DashboardIntent.OnRequestAllResults(AllResultsRequestType.PAGINATION))
                 }
             }
     }
@@ -112,6 +112,34 @@ fun ArticlesScreen(state: DashboardState, onClick: (DashboardIntent) -> Unit){
                     contentAlignment = Alignment.Center
                 ){
                     GradientCircularProgressIndicator(size = 36.dp)
+                }
+            }
+        }
+
+        if (state.allNewsPaginationLoading.not() && state.allNewsLoading.not() && state.allNewsResults.articles.isEmpty()){
+            item {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 300.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    val text = if (state.allSearchRequest.search.isEmpty()) stringResource(R.string.searc_new) else stringResource(R.string.search_no_results)
+                    Icon(
+                        imageVector = Icons.Default.EmojiEmotions,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(150.dp),
+                        tint = colors().primary.copy(alpha = 0.5f)
+                    )
+                    Text(
+                        color = colors().onSurface,
+                        modifier = Modifier.padding( 8.dp),
+                        style = textStyles().labelRegular,
+                        text = stringResource(R.string.no_articles_found)
+                    )
+                    AppSecondaryButton(text = stringResource(R.string.retry)) { onClick.invoke(DashboardIntent.OnRequestAllResults(AllResultsRequestType.RETRY)) }
+
                 }
             }
         }
@@ -164,7 +192,7 @@ fun NewsCard(
                         )
                     }
 
-                    Row(Modifier.fillMaxWidth(),verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(),verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (item.isLoading){
                             ShimmerBox(Modifier
                                 .size(120.dp, 80.dp)
@@ -173,7 +201,13 @@ fun NewsCard(
                         else{
                             NewsIcon(
                                 imageUrl = item.urlToImage,
-                                modifier = Modifier.size(120.dp,80.dp).background(AppColors.orange_bright_ff8, RoundedCornerShape(16.dp)).clip(RoundedCornerShape(16.dp)),
+                                modifier = Modifier
+                                    .size(120.dp, 80.dp)
+                                    .background(
+                                        AppColors.orange_bright_ff8,
+                                        RoundedCornerShape(16.dp)
+                                    )
+                                    .clip(RoundedCornerShape(16.dp)),
 
                             )
                         }
@@ -186,7 +220,7 @@ fun NewsCard(
                                     .height(48.dp)
                                     .clip(RoundedCornerShape(16.dp)))
                             }else{
-                                Text(text = item.description, style = textStyles().bodySmall, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                                Text(text = item.description.orEmpty(), style = textStyles().bodySmall, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start, maxLines = 6, overflow = TextOverflow.Ellipsis)
                             }
                         }
                     }
@@ -212,7 +246,7 @@ fun NewsCard(
                                 .clip(shape))
                         }else{
                             AppLinkButton(
-                                text = "Share",
+                                text = stringResource(R.string.share),
                                 modifier = Modifier.weight(1f),
                                 textModifier = Modifier,
                                 shape = shape,
@@ -221,7 +255,7 @@ fun NewsCard(
                                     onClick.invoke(
                                         DashboardIntent.ActionClicked(
                                             ActionModel(
-                                                type = ActionModelType.SHARE,
+                                                type = ActionModelType.SHARE_CTA_CLICKED,
                                                 item = item
                                             )
                                         )
@@ -240,7 +274,7 @@ fun NewsCard(
                         }
                         else{
                             AppLinkButton(
-                                text = "Read Summary",
+                                text = stringResource(R.string.read_summary),
                                 modifier = Modifier.weight(1f),
                                 textModifier = Modifier,
                                 textStyle = textStyles().CTASmall,
@@ -268,7 +302,7 @@ fun NewsCard(
                         }
                         else {
                             AppLinkButton(
-                                text = "Read in web",
+                                text = stringResource(R.string.read_in_web),
                                 modifier = Modifier.weight(1f),
                                 textModifier = Modifier,
                                 textStyle = textStyles().CTASmall,
@@ -297,11 +331,12 @@ fun NewsCard(
                             Icon(
                                 imageVector = when {
                                     isBookMarkScreen -> Icons.Default.Delete
+                                    isSearchScreen -> Icons.Default.BookmarkAdded
                                     item.isBookmarked -> Icons.Default.Bookmark
                                     else -> Icons.Default.BookmarkBorder
                                 },
                                 contentDescription = stringResource(R.string.bookmark_this_item),
-                                modifier =  Modifier.clickable(enabled = !isSearchScreen){
+                                modifier =  Modifier.alpha(if (isSearchScreen && item.isBookmarked.not())0f else 1f).clickable(enabled = !isSearchScreen){
                                     onClick.invoke(
                                         DashboardIntent.ActionClicked(
                                             ActionModel(
@@ -342,7 +377,9 @@ fun NewsIcon(
     if (imageUrl.isNullOrBlank() || hasError) {
         Box(modifier, contentAlignment = Alignment.Center) {
             Image(
-                modifier = Modifier.fillMaxSize().padding(4.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
                 imageVector = fallbackRes,
                 contentDescription = null,
                 contentScale = ContentScale.Fit,

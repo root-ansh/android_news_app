@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,8 +45,6 @@ import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.WarningAmber
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -80,7 +77,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -696,7 +692,7 @@ fun AppToolbar(
     modifier: Modifier = Modifier,
     title: String = "Test Title",
     titleStyle: TextStyle = MaterialTheme.localTypographyClass.titleLarge,
-    startIcon: ActionModel? = ActionModel("", "", ActionModelType.BACK),
+    startIcon: ActionModel? = ActionModel("", "", ActionModelType.BACK_CTA_CLICKED),
     rightMenu: List<ActionModel> = listOf(),
     rightMenuIcon: ImageVector = Icons.Default.MoreVert,
     onClick: (ActionModel) -> Unit = {}
@@ -964,8 +960,8 @@ fun String.capitaliseEachWord(forceLowercaseFirst: Boolean = true): String {
 @Composable
 fun String.toLangSpecific(): String{
     return when(this){
-        ActionModelType.DEEPLINK_CHANGE_THEME.name -> stringResource(R.string.change_theme)
-        ActionModelType.DEEPLINK_CLEAR_CACHE.name -> stringResource(R.string.clear_all_bookmarks_and_api_cache)
+        ActionModelType.CHANGE_THEME_CTA_CLICKED.name -> stringResource(R.string.change_theme)
+        ActionModelType.CLEAR_CACHE_CTA_CLICKED.name -> stringResource(R.string.clear_all_bookmarks_and_api_cache)
 
         else -> this
     }

@@ -14,6 +14,7 @@ import retrofit2.http.Query
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 import javax.inject.Inject
+import kotlin.collections.sortedByDescending
 
 
 interface NewsApiService {
@@ -36,7 +37,7 @@ interface NewsApiService {
         const val FIELD_PAGE_SIZE = "pageSize"
         const val FIELD_LANGUAGE = "language"
         const val FIELD_SORT = "sortBy"
-        const val FIELD_VAL_SORT = "publishedAt"
+        const val FIELD_VAL_SORT = "relevancy"
         const val FIELD_VAL_LANG = "en"
     }
 }
@@ -73,17 +74,15 @@ class UpdateBookmarksUseCase @Inject constructor(
 
 }
 
-
-
 class NewsListUseCase @Inject constructor(
     private val repo: NewsApiRepo,
     private val cache: NewsApiCache
 ) : BaseUseCase<BaseResponse.Success<NewsResults>, NewsListUseCase.Params>() {
 
-    data class Params(val request: NewsRequest, val cachedOnly: Boolean = false, val isSearch: Boolean = false)
+    data class Params(val request: NewsRequest, val cachedOnly: Boolean = false)
 
     override suspend fun execute(params: Params): BaseResponse.Success<NewsResults> {
-        log("request_info : pagenum : ${params.request.pageNum} | cached Only = ${params.cachedOnly}")
+        log("request_info : pagenum : ${params.request.pageNum} | query: ${params.request.search} |cached Only = ${params.cachedOnly}")
         val origCache = cache.getCachedNewsList()
         if (params.cachedOnly && origCache.isNotEmpty()) {
             return BaseResponse.Success(NewsResults(articles = origCache.sortedByDescending { it.timeStamp() }))
@@ -91,32 +90,55 @@ class NewsListUseCase @Inject constructor(
             val freshResults = repo.getNewsList(params.request)
             when(freshResults){
                 is BaseResponse.Failure -> {
-                    if(params.isSearch){
-                        return BaseResponse.Success(NewsResults())
-                    }else{
-                        return BaseResponse.Success(NewsResults(articles = origCache.sortedByDescending { it.timeStamp() }))
-                    }
+                    return BaseResponse.Success(NewsResults(articles = origCache.sortedByDescending { it.timeStamp() }))
                 }
                 is BaseResponse.Success -> {
-                    if(params.isSearch){
-                        val finalResults = freshResults.body.articles.map { resp ->
-                            val cachedRes = origCache.firstOrNull { it.title.equals(resp.title,true) }
-                            cachedRes?:resp
-                        }
-                        return freshResults.copy(body = freshResults.body.copy(articles = finalResults))
-
-                    }
-                    else{
-                        freshResults.body.articles.forEach { cache.addNewsEntity(it) }
-                        val newCache = cache.getCachedNewsList()
-                        return freshResults.copy(body = freshResults.body.copy(articles = newCache.sortedByDescending { it.timeStamp() }))
-                    }
+                    freshResults.body.articles.forEach { cache.addNewsEntity(it) }
+                    val newCache = cache.getCachedNewsList()
+                    return freshResults.copy(body = freshResults.body.copy(articles = newCache.sortedByDescending { it.timeStamp() }))
 
                 }
             }
         }
     }
 }
+
+class SearchUseCase @Inject constructor(
+    private val repo: NewsApiRepo,
+) : BaseUseCase<BaseResponse.Success<NewsResults>, SearchUseCase.Params>() {
+
+    data class Params(val request: NewsRequest, val cachedList: List<NewsResults.NewsItem> = listOf())
+
+    override suspend fun execute(params: Params): BaseResponse.Success<NewsResults> {
+        log("request_info : params: ${params.request} | cache:${params.cachedList.size}")
+        val freshResults = repo.getNewsList(params.request)
+        when(freshResults){
+            is BaseResponse.Failure -> {
+                return BaseResponse.Success(NewsResults())
+            }
+            is BaseResponse.Success -> {
+                val finalResults = freshResults.body.articles.map { resp ->
+                    val cachedRes = params.cachedList.firstOrNull { it.title.equals(resp.title,true) }
+                    cachedRes?:resp
+                }
+                return freshResults.copy(body = freshResults.body.copy(articles = finalResults.sortedByDescending { it.timeStamp() }))
+            }
+        }
+    }
+}
+
+
+class ClearCacheUseCase @Inject constructor(
+    private val repo: NewsApiRepo,
+    private val cache: NewsApiCache
+) : BaseUseCase<Unit, Unit>() {
+    override suspend fun execute(params: Unit) {
+        cache.clearAllNewsEntity()
+        return
+    }
+
+}
+
 
 
 @Keep @Serializable @Immutable
@@ -162,7 +184,7 @@ data class NewsResults(
     data class NewsItem(
         @SerializedName("author") val author: String? = null,
         @SerializedName("content") val content: String = "",
-        @SerializedName("description") val description: String = "",
+        @SerializedName("description") val description: String? = null,
         @SerializedName("publishedAt") val publishedAt: String = "",
         @SerializedName("source") val source: Source = Source(),
         @SerializedName("title") val title: String = "",

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
@@ -54,12 +55,13 @@ fun DashboardScreen(
     var showLoader by remember { mutableStateOf(false) }
     var showSnackBar by remember { mutableStateOf("") }
     val state by viewModel.state.collectAsStateWithLifecycle(lifeCycleOwner)
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
         scope.launch {
             delay(100)
             log("test : calling init dashboard")
-            viewModel.onIntent(DashboardIntent.InitDashboard(false))
+            viewModel.onIntent(DashboardIntent.OnRequestAllResults(AllResultsRequestType.FRESH))
         }
     }
     LaunchedEffect(Unit) {
@@ -67,6 +69,7 @@ fun DashboardScreen(
             showLoader = false
             showSnackBar = ""
             showBottomSheet = null
+            keyboardController?.hide()
             when(event){
                 AppCommonUiActions.DoNothing -> {}
                 is AppCommonUiActions.LaunchUsingController -> event.callback.invoke(backStack)

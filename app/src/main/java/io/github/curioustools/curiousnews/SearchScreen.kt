@@ -1,6 +1,5 @@
 package io.github.curioustools.curiousnews
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,11 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -49,7 +46,7 @@ import kotlinx.coroutines.delay
 fun SearchScreen(
     state: DashboardState, onClick: (DashboardIntent) -> Unit
 ){
-    val entries = if(state.isAllSearchLoading)state.loadingResults else state.allSearchResults
+    val entries = if(state.allSearchLoading)state.loadingResults else state.allSearchResults
 
     Column(
         Modifier.Companion
@@ -80,16 +77,16 @@ fun SearchScreen(
                         modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp),
                         style = textStyles().labelRegular,
                         color = colors().onSurface,
-                        text = "${state.allSearchResults.totalResults} items available for your query '${state.allSearchRequest.search}'"
+                        text = stringResource(R.string.search_results, state.allSearchResults.totalResults, state.allSearchRequest.search)
                     )
                 }
-                if (state.allSearchResults.articles.isEmpty() && state.isAllSearchLoading.not()){
+                if (state.allSearchResults.articles.isEmpty() && state.allSearchLoading.not()){
                     Column(
                         Modifier
                             .fillMaxWidth()
                             .padding(16.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        val text = if (state.allSearchRequest.search.isEmpty()) "Enter something to start a search" else " No Results found"
+                        val text = if (state.allSearchRequest.search.isEmpty()) stringResource(R.string.searc_new) else stringResource(R.string.search_no_results)
 
                         val icon = if (state.allSearchRequest.search.isEmpty()) Icons.Default.EnergySavingsLeaf else Icons.Default.EmojiEmotions
                         Icon(
@@ -109,23 +106,20 @@ fun SearchScreen(
 
                     }
                 }else{
-                    Column(Modifier
-                        .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                         content = {
                             entries.articles.map {
-                                entries.articles.map {
-                                    NewsCard(
-                                        pos = 0,
-                                        item = it,
-                                        isBookMarkScreen = false,
-                                        isSearchScreen = true,
-                                        onClick = onClick
-                                    )
-                                }
-
+                                NewsCard(
+                                    pos = 0,
+                                    item = it,
+                                    isBookMarkScreen = false,
+                                    isSearchScreen = true,
+                                    onClick = onClick
+                                )
                             }
                             Spacer(Modifier.size(120.dp))
-
                         }
 
                     )
@@ -150,19 +144,18 @@ fun SearchField(
     modifier: Modifier = Modifier,
     onValueAvailable:(String, Boolean)-> Unit = { it, _ ->}
 ) {
-    var currentValue by remember { mutableStateOf(initialValue) }
+    var currentValue: String? by remember { mutableStateOf(initialValue) }
     val selfFocusRequestor = remember { selfFocus ?: FocusRequester() }
     val styles = textStyles()
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     OutlinedTextField(
-        value = currentValue,
+        value = currentValue.orEmpty(),
         onValueChange = {
             currentValue = it
         },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
-            if (currentValue.isNotEmpty()) {
+            if (currentValue.orEmpty().isNotEmpty()) {
                 IconButton(onClick = {
                     currentValue = ""
                     onValueAvailable.invoke("",true)
@@ -191,10 +184,9 @@ fun SearchField(
 
 
     LaunchedEffect(currentValue) {
-        if (currentValue.length < 3) return@LaunchedEffect
+        if (currentValue.orEmpty().length < 3) return@LaunchedEffect
         delay(debounceTime)
-        onValueAvailable(currentValue,false)
-        keyboardController?.hide()
+        onValueAvailable(currentValue.orEmpty(),false)
     }
 }
 

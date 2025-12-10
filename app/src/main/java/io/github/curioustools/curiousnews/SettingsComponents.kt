@@ -50,14 +50,16 @@ fun ClearCacheBottomSheet(
         onDismiss.invoke()
     }
     Column(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         InternalIcon(config = InternalIconConfig.vector2(Icons.AutoMirrored.Default.Logout), iconTint = AppColors.black)
-        TitleText(text = stringResource(R.string.logout_title))
-        SubtitleText(text = stringResource(R.string.logout_subtitle))
-        AppPrimaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.string_signout)){onClick.invoke(true)}
+        TitleText(text = stringResource(R.string.clear_cache))
+        SubtitleText(text = stringResource(R.string.clearn_cache_msg))
+        AppPrimaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.word_continue)){onClick.invoke(true)}
         AppSecondaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.dismiss)){onClick.invoke(false)}
 
         Spacer(Modifier.fillMaxWidth().height(36.dp))
@@ -174,7 +176,7 @@ fun BuildVersion(name: String = "1.2.3",code:String = "1234",isDebug:Boolean = t
         WavyDivider(Modifier.weight(1f), color = colors.onSurface)
         Text(
             modifier = Modifier.padding(horizontal = 4.dp),
-            text = "Build:$name(v$code)•${if(isDebug)"Debug" else "Production"}",
+            text = "Build: $name(V$code) • ${if(isDebug)"Debug" else "Production"}",
             style = fonts.bodySmallB,
             color = colors.onSurface
         )
@@ -196,9 +198,9 @@ fun SettingItems(modifier: Modifier = Modifier, state: DashboardState = Dashboar
                 ActionModel(
                     "",
                     "",
-                    ActionModelType.DEEPLINK_CLEAR_CACHE,
+                    ActionModelType.CLEAR_CACHE_CTA_CLICKED,
                 ),
-                ActionModel("", "", ActionModelType.DEEPLINK_CHANGE_THEME),
+                ActionModel("", "", ActionModelType.CHANGE_THEME_CTA_CLICKED),
             )
         )
 
