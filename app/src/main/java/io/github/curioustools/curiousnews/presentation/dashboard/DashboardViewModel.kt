@@ -1,4 +1,4 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation.dashboard
 
 import android.content.Intent
 import android.net.Uri
@@ -8,9 +8,21 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.curioustools.curiousnews.ActionModelType.*
-import io.github.curioustools.curiousnews.AppCommonBottomSheetType.*
-import io.github.curioustools.curiousnews.AppCommonUiActions.*
+import io.github.curioustools.curiousnews.presentation.dashboard.ActionModelType.*
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.data.SharedPrefs
+import io.github.curioustools.curiousnews.domain.usecase.ClearCacheUseCase
+import io.github.curioustools.curiousnews.domain.usecase.NewsListUseCase
+import io.github.curioustools.curiousnews.domain.dto.NewsRequest
+import io.github.curioustools.curiousnews.domain.dto.NewsResults
+import io.github.curioustools.curiousnews.domain.usecase.SearchUseCase
+import io.github.curioustools.curiousnews.domain.usecase.UpdateBookmarksUseCase
+import io.github.curioustools.curiousnews.commons.log
+import io.github.curioustools.curiousnews.presentation.AppCommonUiActions
+import io.github.curioustools.curiousnews.presentation.AppCommonUiActions.*
+import io.github.curioustools.curiousnews.presentation.AppCommonBottomSheetIntents
+import io.github.curioustools.curiousnews.presentation.AppCommonBottomSheetType.*
+import io.github.curioustools.curiousnews.presentation.AppRoutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -33,7 +45,7 @@ class DashboardViewModel @Inject constructor(
     private val clarCacheUseCase: ClearCacheUseCase,
 ) : ViewModel(){
 
-    private val _events = Channel<AppCommonUiActions>(Channel.Factory.BUFFERED)
+    private val _events = Channel<AppCommonUiActions>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
     private val _state = MutableStateFlow(DashboardState())
@@ -75,7 +87,7 @@ class DashboardViewModel @Inject constructor(
                     }
                     SHARE_CTA_CLICKED -> {
                         if (actionModel.item!=null){
-                            emitLaunchEffectEvent(LaunchUsingActivity{ act->
+                            emitLaunchEffectEvent(AppCommonUiActions.LaunchUsingActivity { act ->
                                 val intent = Intent(Intent.ACTION_SEND).also {
                                     it.type = "text/plain"
                                     it.putExtra(Intent.EXTRA_TEXT, actionModel.item.toShareMsg())
@@ -88,7 +100,7 @@ class DashboardViewModel @Inject constructor(
                     BOOKMARK -> handleBookmarkClick(actionModel.item)
                     OPEN_NATIVE -> {
                         emitLaunchEffectEvent(LaunchUsingController{
-                            actionModel.item?.let { article ->  it.add(AppRoutes.ArticleNative(article))  }
+                            actionModel.item?.let { article ->  it.add(AppRoutes.ArticleDetail(article))  }
 
                         })
                     }
@@ -199,9 +211,7 @@ class DashboardViewModel @Inject constructor(
 
 
 
-@Keep
-@Serializable
-@Immutable
+@Keep @Serializable @Immutable
 sealed interface DashboardIntent{
     data class OnRequestAllResults(val requestType: AllResultsRequestType): DashboardIntent
     data class OnArticleSearchRequest(val query: String): DashboardIntent
@@ -214,12 +224,12 @@ enum class AllResultsRequestType{FRESH,RETRY,PAGINATION,FRESH_AFTER_CLEAR}
 @Keep @Serializable @Immutable
 data class DashboardState(
     val allNewsLoading: Boolean = true,
-    val allNewsRequest:NewsRequest = NewsRequest.all(0),
+    val allNewsRequest: NewsRequest = NewsRequest.all(0),
     val allNewsResults: NewsResults = NewsResults(),
     val allNewsPaginationLoading: Boolean = false,
 
     val allSearchLoading: Boolean = false,
-    val allSearchRequest:NewsRequest = NewsRequest.query("",0),
+    val allSearchRequest: NewsRequest = NewsRequest.query("",0),
     val allSearchResults: NewsResults = NewsResults(),
     val allSearchResultsPaginationLoading: Boolean = false,
 

@@ -1,4 +1,4 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation
 
 import android.app.Activity
 import android.content.Context
@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -44,17 +43,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.WarningAmber
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,7 +60,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -95,13 +88,45 @@ import androidx.navigation3.runtime.NavKey
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.placeholder
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.presentation.AppButtonConfig.AppButtonType.LINK
+import io.github.curioustools.curiousnews.presentation.AppButtonConfig.AppButtonType.ROUND_PRIMARY
+import io.github.curioustools.curiousnews.presentation.AppButtonConfig.AppButtonType.ROUND_SECONDARY
+import io.github.curioustools.curiousnews.presentation.AppButtonConfig.InternalIconConfig
+import io.github.curioustools.curiousnews.presentation.AppButtonConfig.InternalTextConfig
+import io.github.curioustools.curiousnews.presentation.dashboard.ActionModel
+import io.github.curioustools.curiousnews.presentation.dashboard.ActionModelType
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
-import io.github.curioustools.curiousnews.AppButtonConfig.AppButtonType.ROUND_SECONDARY
-import io.github.curioustools.curiousnews.AppButtonConfig.InternalIconConfig
-import io.github.curioustools.curiousnews.AppButtonConfig.InternalTextConfig
-import io.github.curioustools.curiousnews.AppButtonConfig.AppButtonType.LINK
-import io.github.curioustools.curiousnews.AppButtonConfig.AppButtonType.ROUND_PRIMARY
+
+@Keep
+@Immutable
+@Serializable
+sealed interface AppCommonUiActions {
+    data class ShowBottomSheet(val type: AppCommonBottomSheetType) : AppCommonUiActions
+    data class ShowLoader(val type: String ="") : AppCommonUiActions
+    data class ShowToast(val resId: Int, val duration: Int = Toast.LENGTH_SHORT) : AppCommonUiActions
+    data class ShowSnackBar(val message: String, val actionLabel: String? = null, val duration: SnackbarDuration = SnackbarDuration.Short) : AppCommonUiActions
+
+    data object DoNothing : AppCommonUiActions
+    data class LaunchComposableScreen(val route: AppRoutes): AppCommonUiActions
+    data class LaunchUsingContext(val callback: (context: Context) -> Unit) : AppCommonUiActions
+    data class LaunchUsingActivity(val callback: (context: Activity?) -> Unit) : AppCommonUiActions
+    data class LaunchUsingController(val callback: (NavBackStack<NavKey>)-> Unit) : AppCommonUiActions
+}
+
+
+
+
+@Composable
+fun String.toLangSpecific(): String{
+    return when(this){
+        ActionModelType.CHANGE_THEME_CTA_CLICKED.name -> stringResource(R.string.change_theme)
+        ActionModelType.CLEAR_CACHE_CTA_CLICKED.name -> stringResource(R.string.clear_all_bookmarks_and_api_cache)
+
+        else -> this
+    }
+}
 
 @Composable
 fun AnimatedSnackBarHost(
@@ -111,7 +136,7 @@ fun AnimatedSnackBarHost(
     val isVisible = message.isNotBlank()
     val dimens = MaterialTheme.localDimens
 
-    Box(modifier = Modifier.Companion.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = isVisible,
             enter = slideInVertically(
@@ -125,7 +150,7 @@ fun AnimatedSnackBarHost(
             modifier = Modifier.Companion
                 .fillMaxWidth()
                 .padding(start = dimens.dp16, end = dimens.dp16, bottom = dimens.dp24)
-                .align(Alignment.Companion.BottomCenter)
+                .align(Alignment.BottomCenter)
         ) {
             CustomSnackBar(message)
         }
@@ -164,17 +189,17 @@ fun CustomSnackBar(
         modifier = boxModifier
     ) {
         Row(
-            verticalAlignment = Alignment.Companion.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.Companion.padding(8.dp)
+            modifier = Modifier.padding(8.dp)
         ) {
             Image(
                 painter = rememberVectorPainter(Icons.Default.CheckCircle),
                 contentDescription = "Success",
-                modifier = Modifier.Companion.size(MaterialTheme.localDimens.dp16),
-                colorFilter = ColorFilter.Companion.tint(AppColors.white)
+                modifier = Modifier.size(MaterialTheme.localDimens.dp16),
+                colorFilter = ColorFilter.tint(AppColors.white)
             )
-            Spacer(modifier = Modifier.Companion.width(MaterialTheme.localDimens.dp8))
+            Spacer(modifier = Modifier.width(MaterialTheme.localDimens.dp8))
             Text(
                 text = message,
                 color = AppColors.white,
@@ -183,51 +208,6 @@ fun CustomSnackBar(
         }
     }
 }
-
-
-
-@Keep
-@Immutable
-@Serializable
-sealed interface AppCommonUiActions {
-    data class ShowBottomSheet(val type: AppCommonBottomSheetType) : AppCommonUiActions
-    data class ShowLoader(val type: String ="") : AppCommonUiActions
-    data class ShowToast(val resId: Int, val duration: Int = Toast.LENGTH_SHORT) : AppCommonUiActions
-    data class ShowSnackBar(val message: String, val actionLabel: String? = null, val duration: SnackbarDuration = SnackbarDuration.Short) : AppCommonUiActions
-
-    data object DoNothing : AppCommonUiActions
-    data class LaunchComposableScreen(val route: AppRoutes): AppCommonUiActions
-    data class LaunchUsingContext(val callback: (context: Context) -> Unit) : AppCommonUiActions
-    data class LaunchUsingActivity(val callback: (context: Activity?) -> Unit) : AppCommonUiActions
-    data class LaunchUsingController(val callback: (NavBackStack<NavKey>)-> Unit) : AppCommonUiActions
-}
-
-@Keep
-@Immutable
-@Serializable
-sealed interface AppCommonBottomSheetType {
-    data class ErrorSheet(val errorInfo: BaseStatus, val title: String = "Something went wrong", val subtitle: String = errorInfo.msg): AppCommonBottomSheetType{
-        companion object{
-            fun sww(title: String = "Something Went Wrong"): ErrorSheet{
-                return ErrorSheet(BaseStatus.UNRECOGNISED,title = title)
-            }
-        }
-    }
-    data object ClearCacheBottomSheet: AppCommonBottomSheetType
-    data class SelectThemeBottomSheet(val existingSelection: SharedPrefs.ThemeMode): AppCommonBottomSheetType
-
-}
-
-@Keep
-@Immutable
-@Serializable
-sealed interface AppCommonBottomSheetIntents{
-    data object OnCacheClearSelection: AppCommonBottomSheetIntents
-    data class OnThemeSelected(val theme: SharedPrefs.ThemeMode) : AppCommonBottomSheetIntents
-}
-
-
-
 
 
 
@@ -707,8 +687,8 @@ fun AppToolbar(
                 .background(MaterialTheme.colorScheme.secondaryContainer)
         ) {
             Row(
-                modifier = Modifier.Companion.fillMaxWidth(),
-                verticalAlignment = Alignment.Companion.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 startIcon?.let {
@@ -735,65 +715,9 @@ fun AppToolbar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CommonBottomSheet(
-    sheetType: AppCommonBottomSheetType,
-    onDismiss: () -> Unit,
-    onSheetActions:(AppCommonBottomSheetIntents)-> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    ModalBottomSheet(
-        modifier = Modifier.Companion,
-        onDismissRequest = { onDismiss() },
-        dragHandle = { SheetDragHandle() },
-        sheetState = sheetState,
-        scrimColor = colors().background.copy(alpha = 0.5f),
-        containerColor = colors().tertiaryContainer
-    ) {
-        when (sheetType) {
-
-            is AppCommonBottomSheetType.ClearCacheBottomSheet -> ClearCacheBottomSheet(
-
-                onDismiss,
-                onSheetActions
-            )
-
-            is AppCommonBottomSheetType.ErrorSheet -> ErrorSheet(
-                sheetType,
-                onDismiss,
-                onSheetActions
-            )
-
-            is AppCommonBottomSheetType.SelectThemeBottomSheet -> {
-                SelectThemeSheet(sheetType,onDismiss,onSheetActions)
-            }
-        }
-    }
-}
 
 
-@Preview
-@Composable
-fun SheetDragHandle(showDragHandle: Boolean = true) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(top = MaterialTheme.localDimens.dp8, bottom = MaterialTheme.localDimens.dp8),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (showDragHandle) {
-            Box(
-                modifier = Modifier
-                    .width(MaterialTheme.localDimens.dp80)
-                    .height(MaterialTheme.localDimens.dp4)
-                    .clip(RoundedCornerShape(MaterialTheme.localDimens.dp25))
-                    .background(MaterialTheme.colorScheme.surface)
-            )
-        }
-    }
-}
+
 
 
 @Preview
@@ -818,9 +742,9 @@ fun GradientCircularProgressIndicator(
             .size(size)
             .rotate(angle)
     ) {
-        val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Companion.Round)
+        val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
         drawArc(
-            brush = Brush.Companion.linearGradient(gradientColors),
+            brush = Brush.linearGradient(gradientColors),
             startAngle = 0f,
             sweepAngle = 270f,
             useCenter = false,
@@ -863,7 +787,7 @@ fun ShimmerBox(
         label = "Shimmer loading animation",
     )
 
-    val brush = Brush.Companion.linearGradient(
+    val brush = Brush.linearGradient(
         colors = shimmerColors,
         start = Offset(x = translateAnimation.value - widthOfShadowBrush, y = 0.0f),
         end = Offset(x = translateAnimation.value, y = angleOfAxisY),
@@ -881,91 +805,3 @@ fun ShimmerBox(
 
 
 }
-
-
-
-
-
-
-@Preview
-@Composable
-fun ErrorSheet(
-    sheetConfig: AppCommonBottomSheetType.ErrorSheet = AppCommonBottomSheetType.ErrorSheet.sww(),
-    onDismiss: () -> Unit = {},
-    onBottomSheetEvent: (AppCommonBottomSheetIntents) -> Unit = {}
-) {
-    Column(
-        modifier = Modifier.Companion
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.Companion.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Image(
-            painter = rememberVectorPainter(Icons.Default.WarningAmber),
-            contentDescription = "",
-            modifier = Modifier.Companion
-                .size(100.dp)
-                .background(AppColors.orange_m200, CircleShape)
-                .clip(CircleShape)
-                .padding(16.dp),
-            colorFilter = ColorFilter.Companion.tint(AppColors.orange_bright_ff8)
-        )
-        Text(
-            text = sheetConfig.title,
-            style = textStylesSystem().titleLarge,
-            modifier = Modifier.Companion.padding(horizontal = 8.dp)
-        )
-        Text(
-            text = sheetConfig.subtitle,
-            style = textStylesSystem().bodyLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.Companion.padding(horizontal = 8.dp)
-        )
-        Text(
-            text = "${sheetConfig.errorInfo.code} | ${sheetConfig.errorInfo.name}",
-            style = textStylesSystem().bodyMedium,
-            modifier = Modifier.Companion
-                .padding(horizontal = 8.dp)
-                .alpha(0.5f)
-        )
-        OutlinedButton(
-            modifier = Modifier.Companion.fillMaxWidth(),
-            onClick = { onDismiss.invoke() }
-        ) {
-            Text(
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                textAlign = TextAlign.Companion.Center,
-                style = textStylesSystem().bodyLarge,
-                text = stringResource(R.string.dismiss)
-            )
-        }
-        Spacer(
-            Modifier.Companion
-                .fillMaxWidth()
-                .height(36.dp)
-        )
-    }
-}
-fun String.capitaliseEachWord(forceLowercaseFirst: Boolean = true): String {
-    return this.split(" ").joinToString(" ") {
-        val part = if (forceLowercaseFirst) it.lowercase() else it
-        part.replaceFirstChar { c -> c.uppercase() }
-    }
-}
-
-
-@Composable
-fun String.toLangSpecific(): String{
-    return when(this){
-        ActionModelType.CHANGE_THEME_CTA_CLICKED.name -> stringResource(R.string.change_theme)
-        ActionModelType.CLEAR_CACHE_CTA_CLICKED.name -> stringResource(R.string.clear_all_bookmarks_and_api_cache)
-
-        else -> this
-    }
-}
-
-
-

@@ -1,4 +1,4 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation.settings
 
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
@@ -39,8 +39,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.commons.isDebugApp
+import io.github.curioustools.curiousnews.presentation.AnimatedSnackBarHost
+import io.github.curioustools.curiousnews.presentation.AppColors
+import io.github.curioustools.curiousnews.presentation.AppCommonBottomSheetType
+import io.github.curioustools.curiousnews.presentation.AppCommonUiActions
+import io.github.curioustools.curiousnews.presentation.CommonBottomSheet
+import io.github.curioustools.curiousnews.presentation.GradientCircularProgressIndicator
+import io.github.curioustools.curiousnews.presentation.SafeColorColumn
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardIntent
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardState
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardViewModel
+import io.github.curioustools.curiousnews.presentation.localTypographyClass
+import io.github.curioustools.curiousnews.BuildConfig
 
 @Composable
 fun SettingsScreen(
@@ -79,13 +91,17 @@ fun SettingsScreen(
         }
     }
 
-    Box(Modifier.Companion.fillMaxSize()) {
+    Box(Modifier.fillMaxSize()) {
         SettingsScreenUI(
             state,
             onClick = { it: DashboardIntent -> dashboardViewModel.onIntent(it) })
 
-        if (showLoader) GradientCircularProgressIndicator(Modifier.Companion.align(Alignment.Companion.Center))
-        AnimatedSnackBarHost(showSnackBar) { showSnackBar = "" }
+        if (showLoader) GradientCircularProgressIndicator(
+            Modifier.align(Alignment.Center)
+        )
+        AnimatedSnackBarHost(showSnackBar) {
+            showSnackBar = ""
+        }
         showBottomSheet?.let {
             CommonBottomSheet(
                 sheetType = it,
@@ -105,18 +121,22 @@ fun SettingsScreenUI(state: DashboardState = DashboardState(), onClick: (Dashboa
         mainColors = listOf(colors.secondaryContainer),
         bottomBarColors = listOf(colors.onTertiary),
     ) {
-        Column(Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
             Box(
                 modifier = Modifier
                     .padding(8.dp)
                     .align(Alignment.CenterHorizontally)
                     .size(80.dp)
-            ){
-                Box(Modifier
-                    .fillMaxSize()
-                    .background(colors.onTertiary, CircleShape))
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(colors.onTertiary, CircleShape)
+                )
                 Image(
                     painter = painterResource(R.drawable.ic_launcher_foreground),
                     colorFilter = ColorFilter.tint(AppColors.orange_bright_ff8),
@@ -136,7 +156,10 @@ fun SettingsScreenUI(state: DashboardState = DashboardState(), onClick: (Dashboa
                 textAlign = TextAlign.Center,
                 style = fonts.titleRegular
             )
-            BuildVersion(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString(), isDebugApp())
+            BuildVersion(
+                BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString(),
+                isDebugApp()
+            )
 
             Column(
                 modifier = Modifier
@@ -148,9 +171,11 @@ fun SettingsScreenUI(state: DashboardState = DashboardState(), onClick: (Dashboa
                     ),
                 content = {
                     SettingItems(state = state, onClick = onClick)
-                    Spacer(Modifier
-                        .fillMaxWidth()
-                        .height(120.dp))
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                    )
                 }
             )
         }

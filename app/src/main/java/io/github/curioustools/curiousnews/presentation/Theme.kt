@@ -1,7 +1,5 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Build
 import androidx.activity.ComponentActivity
@@ -14,10 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoMode
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -54,10 +48,11 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
-import io.github.curioustools.curiousnews.MyFonts.ContentFont
-import io.github.curioustools.curiousnews.MyFonts.DisplayFont
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.data.SharedPrefs
+import io.github.curioustools.curiousnews.presentation.MyFonts.ContentFont
+import io.github.curioustools.curiousnews.presentation.MyFonts.DisplayFont
 import kotlinx.coroutines.CoroutineExceptionHandler
-import javax.inject.Inject
 import kotlin.apply
 import kotlin.collections.average
 import kotlin.collections.first
@@ -631,83 +626,6 @@ fun SafeColorColumn(
             content = content
         )
     }
-}
-
-
-class SharedPrefs  @Inject constructor(context: Context) {
-    val userSettings = UserSettings(context.getSharedPreferences("app_preferences", Context.MODE_PRIVATE))
-    val profileSettings = ProfileSettings(context.getSharedPreferences("profile_pref", Context.MODE_PRIVATE))
-
-    @Deprecated("use room db")
-    val awsCache = AWSCache(context.getSharedPreferences("aws_pref", Context.MODE_PRIVATE))
-
-
-    fun getCurrentThemeInfo() = userSettings.themeType to userSettings.useDynamicColor
-    fun isChangedKeyThemeKey(key: String?) = key.equals("themeType",true)
-
-
-    enum class ThemeMode {
-        LIGHT, DARK, SYSTEM;
-
-
-        fun icon() = when(this){
-            LIGHT -> Icons.Default.LightMode
-            DARK -> Icons.Default.DarkMode
-            SYSTEM -> Icons.Default.AutoMode
-        }
-
-    }
-
-    class UserSettings internal constructor(private val pref: SharedPreferences){
-        var useDynamicColor: Boolean
-            get() = pref.getBoolean("useDynamicColor", false)
-            set(value) { pref.edit().putBoolean("useDynamicColor", value).apply() }
-
-        var themeType: ThemeMode
-            get() {
-                val value = pref.getString("themeType", ThemeMode.LIGHT.name)
-                return ThemeMode.valueOf(value ?: ThemeMode.LIGHT.name)
-            }
-            set(value) { pref.edit().putString("themeType", value.name).apply() }
-
-        fun registerListener(listener: SharedPreferences.OnSharedPreferenceChangeListener){
-            pref.registerOnSharedPreferenceChangeListener(listener)
-        }
-        fun unregisterListener(listener: SharedPreferences.OnSharedPreferenceChangeListener){
-            pref.unregisterOnSharedPreferenceChangeListener(listener)
-        }
-
-        fun isThemeKey(key: String?) = key.equals("themeType",true)
-    }
-
-    class ProfileSettings internal constructor(private val pref: SharedPreferences){
-
-        var isLoggedIn: Boolean
-            get() = pref.getBoolean("loginSuccessful", false)
-            set(value)  { pref.edit()?.putBoolean("loginSuccessful", value)?.apply() }
-
-        var email: String
-            get() = pref.getString("email", "User").orEmpty()
-            set(value)  { pref.edit()?.putString("email", value)?.apply() }
-
-    }
-    class AWSCache internal constructor(private val pref: SharedPreferences){
-
-        var lastCached: Long
-            get() = pref.getLong("lastCached", 0L)
-            set(value)  { pref.edit()?.putLong("lastCached", value)?.apply()
-            }
-
-        var videoListResp: List<String>
-            get()  {
-                val str = pref.getString("videoListResp", "").orEmpty()
-                return if(str.isBlank()) listOf() else str.split(",")
-            }
-            set(value)  { pref.edit()?.putString("videoListResp", value.joinToString(","))?.apply()
-            }
-
-    }
-
 }
 
 

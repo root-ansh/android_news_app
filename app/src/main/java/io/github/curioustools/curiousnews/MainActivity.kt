@@ -7,6 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.curioustools.curiousnews.presentation.AppGraph
+import io.github.curioustools.curiousnews.presentation.AppTheme
+import io.github.curioustools.curiousnews.data.SharedPrefs
+import io.github.curioustools.curiousnews.presentation.enableBackgroundControllableEdgeToEdge
 import javax.inject.Inject
 
 
@@ -37,7 +41,7 @@ class MainActivity : ComponentActivity() {
                 }
             )
 
-            AppTheme  (
+            AppTheme(
                 themeType = themeSnapshot.first,
                 dynamicColor = themeSnapshot.second,
                 content = { AppGraph() }

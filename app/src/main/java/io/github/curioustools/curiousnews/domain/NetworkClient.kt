@@ -1,29 +1,17 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.domain
 
 import android.Manifest
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
-import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.Keep
 import androidx.annotation.RequiresPermission
 import androidx.annotation.WorkerThread
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.RoomDatabase.QueryCallback
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
+import io.github.curioustools.curiousnews.commons.isDebugApp
+import io.github.curioustools.curiousnews.domain.service.NewsApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Authenticator
@@ -47,7 +35,6 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
-import timber.log.Timber
 import java.io.IOException
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -58,37 +45,18 @@ import java.net.Socket
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.inject.Singleton
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
-import kotlin.also
 import kotlin.collections.forEach
-import kotlin.let
 
 
-@Module
-@InstallIn(SingletonComponent::class)
-object AppDI {
+object NetworkClient {
 
-    @Singleton @Provides
-    fun providesRoomDatabase(@ApplicationContext context: Context): AppDatabase {
-        return AppDatabase.instance(context)
-    }
-
-
-    @Provides
-    fun provideSharedPrefs(@ApplicationContext context: Context, ): SharedPrefs {
-        return SharedPrefs(context)
-
-    }
-
-    @Provides
-    fun getRetrofit(@ApplicationContext ctx: Context): Retrofit {
+    fun getRetrofit(ctx: Context) : Retrofit{
         val client = if (isDebugApp()) {
             getMyUnsafeOkHttpBuilderDEBUG(null, null, ctx).build()
         } else {
@@ -96,107 +64,7 @@ object AppDI {
         }
         return getRetrofitBuilder(NewsApiService.BASE, client).addScalerConvertor().addGsonConvertor().build()
     }
-
-
-//    @Provides
-//    fun providesLoginUseCase(@ApplicationContext context: Context): LoginUseCase{
-//        return DI.getLoginUseCase(context)
-//    }
-
 }
-
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class AppApisDI{
-    @Binds
-    abstract fun bindRepo(repoImpl: NewsApiRepoImpl): NewsApiRepo
-
-    @Binds
-    abstract fun bindCache(cacheImpl: NewsApiCacheImpl): NewsApiCache
-
-
-
-    companion object{
-        @Provides
-        fun providesNewsDao(appDatabase: AppDatabase): NewsDao {
-            return appDatabase.newsDao()
-        }
-
-        @Provides
-        fun getAppApiService(retrofit: Retrofit): NewsApiService {
-            return retrofit.create(NewsApiService::class.java)
-        }
-    }
-
-}
-
-class Migration1To2 : Migration(1, 2) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        if ( db.isColumnExists(AppDatabase.TABLE_NEWS, "some_table_column").not() ) {
-            db.execSQL("ALTER TABLE  ${AppDatabase.TABLE_NEWS} ADD COLUMN some_table_column TEXT NOT NULL DEFAULT ''")
-        }
-    }
-}
-
-@Database(entities = [NewsEntity::class], version = 2, exportSchema = true)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun newsDao(): NewsDao
-
-    companion object {
-        const val DB_NAME = "app_database"
-        const val TABLE_NEWS = "news"
-
-        fun allMigrations() = arrayOf(Migration1To2())
-
-        fun instance(context: Context): AppDatabase{
-            val dbBuilder = Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
-            dbBuilder.addMigrations(*allMigrations())
-            dbBuilder.also {dbBuilder ->
-                if(BuildConfig.DEBUG){
-                    val executor: Executor = Executors.newSingleThreadExecutor()
-                    val queryCallback = QueryCallback { sqlQuery, bindArgs ->
-                        val str = "Room DB: executed query: `$sqlQuery` with args: `$bindArgs`"
-                        log(str)
-                    }
-                    dbBuilder.setQueryCallback(queryCallback, executor)
-                }
-            }
-            return dbBuilder.build()
-        }
-    }
-
-}
-
-fun SupportSQLiteDatabase.isColumnExists(tableName: String, columnName: String): Boolean {
-    val cursor = this.query("PRAGMA table_info($tableName)")
-    cursor.use {
-        while (it.moveToNext()) {
-            val nameIndex = it.getColumnIndex("name")
-            if (nameIndex != -1) {
-                val existingColumnName = it.getString(nameIndex)
-                if (existingColumnName == columnName) {
-                    return true
-                }
-            }
-        }
-    }
-    return false
-}
-
-
-
-abstract class BaseUseCase<out Result, in Params> {
-    abstract suspend fun execute(params: Params): Result
-    suspend fun executeAsync(params: Params):Result{
-        return withContext(Dispatchers.IO) {
-            execute(params)
-        }
-    }
-}
-
-
-
-//todo fix
 
 
 fun getGsonBuilder(serializeNulls: Boolean = false, pretty: Boolean = false, ): GsonBuilder {
@@ -367,21 +235,11 @@ fun Retrofit.Builder.addGsonConvertor(gson: Gson =getGsonObject()): Retrofit.Bui
     return this
 }
 
-
-
 fun Retrofit.Builder.addScalerConvertor(): Retrofit.Builder {
     addConverterFactory(ScalarsConverterFactory.create())
     return this
 }
 
-
-fun isDebugApp():Boolean{
-    return BuildConfig.DEBUG
-}
-fun log(key: String, value: Any? = null, tag: String = "CUSTOM_LOGS") {
-    val msg = if (value == null) key else "$key:$value"
-    Timber.tag(tag).i(msg)
-}
 
 
 
@@ -470,19 +328,17 @@ class InternetCheckInterceptor(private val context: Context? = null) : Intercept
     }
 }
 
-@Keep
-sealed class BaseResponse<T>(open val status: BaseStatus) {
 
-    @Keep
-    data class Success<T>(val body: T) : BaseResponse<T>(BaseStatus.SUCCESS)
-
-    @Keep
-    data class Failure<T>(
-        val body: T? = null,
-        override val status: BaseStatus,
-        var exception: Throwable = Exception(status.msg)
-    ) : BaseResponse<T>(status)
+abstract class BaseUseCase<out Result, in Params> {
+    abstract suspend fun execute(params: Params): Result
+    suspend fun executeAsync(params: Params):Result{
+        return withContext(Dispatchers.IO) {
+            execute(params)
+        }
+    }
 }
+
+
 
 @Keep
 enum class BaseStatus(val code: Int, val msg: String) {
@@ -506,8 +362,19 @@ enum class BaseStatus(val code: Int, val msg: String) {
 }
 
 
-@ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
-fun isAndroidGTEquals23M() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+@Keep
+sealed class BaseResponse<T>(open val status: BaseStatus) {
+
+    @Keep
+    data class Success<T>(val body: T) : BaseResponse<T>(BaseStatus.SUCCESS)
+
+    @Keep
+    data class Failure<T>(
+        val body: T? = null,
+        override val status: BaseStatus,
+        var exception: Throwable = Exception(status.msg)
+    ) : BaseResponse<T>(status)
+}
 
 
 /**
@@ -543,15 +410,5 @@ fun <T> retrofit2.Call<T>.executeAndUnify(): BaseResponse<T> {
     }
 
 }
-
-fun <DTO, RESP> BaseResponse<DTO>.convertTo(successConvertor: (DTO) -> RESP): BaseResponse<RESP> {
-    return when (this) {
-        is BaseResponse.Failure -> BaseResponse.Failure(null, this.status,this.exception)
-        is BaseResponse.Success -> BaseResponse.Success(successConvertor.invoke(this.body))
-    }
-
-}
-
-
 
 

@@ -1,4 +1,4 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation.bookmarks
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,6 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.curioustools.curiousnews.presentation.AppToolbar
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardIntent
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardState
+import io.github.curioustools.curiousnews.presentation.GradientCircularProgressIndicator
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.presentation.colors
+import io.github.curioustools.curiousnews.presentation.headlines.NewsCard
+import io.github.curioustools.curiousnews.presentation.textStyles
 
 @Composable
 fun BookmarksScreen(
@@ -54,7 +62,8 @@ fun BookmarksScreen(
         }
 
         item {
-            Spacer(Modifier
+            Spacer(
+                Modifier.Companion
                 .background(colors().background, RectangleShape)
                 .fillMaxWidth()
                 .height(800.dp))

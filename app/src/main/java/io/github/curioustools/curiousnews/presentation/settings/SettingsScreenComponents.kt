@@ -1,21 +1,17 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation.settings
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,109 +28,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import io.github.curioustools.curiousnews.AppButtonConfig.InternalIconConfig
+import io.github.curioustools.curiousnews.presentation.dashboard.ActionModel
+import io.github.curioustools.curiousnews.presentation.dashboard.ActionModelType
+import io.github.curioustools.curiousnews.presentation.AppButtonConfig.InternalIconConfig
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardIntent
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardState
+import io.github.curioustools.curiousnews.presentation.InternalIcon
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.presentation.colors
+import io.github.curioustools.curiousnews.presentation.localTypographyClass
+import io.github.curioustools.curiousnews.presentation.textStyles
+import io.github.curioustools.curiousnews.presentation.toLangSpecific
 import kotlin.collections.lastIndex
 import kotlin.collections.map
 import kotlin.collections.mapIndexed
 import kotlin.ranges.coerceAtMost
 import kotlin.to
 
-@Preview
-@Composable
-fun ClearCacheBottomSheet(
-    onDismiss: () -> Unit = {},
-    onBottomSheetEvent: (AppCommonBottomSheetIntents) -> Unit = {}
-) {
-    val onClick = { b:Boolean ->
-        if(b){onBottomSheetEvent.invoke(AppCommonBottomSheetIntents.OnCacheClearSelection)}
-        onDismiss.invoke()
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        InternalIcon(config = InternalIconConfig.vector2(Icons.AutoMirrored.Default.Logout), iconTint = AppColors.black)
-        TitleText(text = stringResource(R.string.clear_cache))
-        SubtitleText(text = stringResource(R.string.clearn_cache_msg))
-        AppPrimaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.word_continue)){onClick.invoke(true)}
-        AppSecondaryButton(modifier = Modifier.fillMaxWidth(), text = stringResource(R.string.dismiss)){onClick.invoke(false)}
-
-        Spacer(Modifier.fillMaxWidth().height(36.dp))
-    }
-
-}
-
-
-@Preview
-@Composable
-fun SelectThemeSheet(
-    sheetConfig: AppCommonBottomSheetType.SelectThemeBottomSheet = AppCommonBottomSheetType.SelectThemeBottomSheet(SharedPrefs.ThemeMode.SYSTEM),
-    onDismiss: () -> Unit = {},
-    onBottomSheetEvent: (AppCommonBottomSheetIntents) -> Unit = {}
-) {
-    val selected = sheetConfig.existingSelection
-    val all = SharedPrefs.ThemeMode.entries
-
-    val onClick = { it: SharedPrefs.ThemeMode ->
-        onBottomSheetEvent.invoke(AppCommonBottomSheetIntents.OnThemeSelected(it))
-        onDismiss.invoke()
-    }
-    val selectedText = when(selected){
-        SharedPrefs.ThemeMode.LIGHT -> stringResource(R.string.msg_theme_light)
-        SharedPrefs.ThemeMode.DARK -> stringResource(R.string.msg_theme_dark)
-        SharedPrefs.ThemeMode.SYSTEM -> stringResource(R.string.msg_theme_auto)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        InternalIcon(config = InternalIconConfig.vector2(Icons.Default.LightMode), iconTint = AppColors.black)
-        TitleText(text = stringResource(R.string.change_theme))
-        Row(Modifier.fillMaxWidth(0.65f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            all.map {
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if(it == selected){
-                        AppPrimaryButton(
-                            leftIcon = InternalIconConfig.vector(it.icon()).copy(iconModifier = Modifier
-                                .size(42.dp)
-                                .padding(4.dp)),
-                            onClick = {onClick.invoke(it)}
-                        )
-                    }
-                    else{
-                        AppSecondaryButton(
-                            leftIcon = InternalIconConfig.vector(it.icon()).copy(iconModifier = Modifier
-                                .size(42.dp)
-                                .padding(4.dp)),
-                            onClick = {onClick.invoke(it)}
-                        )
-                    }
-                    Text(
-                        text = it.name.toLangSpecific().capitaliseEachWord(),
-                        style = textStyles().bodyRegularB,
-                        textAlign = TextAlign.Center
-                    )
-
-
-                }
-            }
-
-
-        }
-        SubtitleText2(selectedText)
-        Spacer(Modifier
-            .fillMaxWidth()
-            .height(36.dp))
-    }
-
-}
 
 
 
@@ -249,7 +159,7 @@ fun SettingItems(modifier: Modifier = Modifier, state: DashboardState = Dashboar
                         style = fonts.bodyRegular
                     )
                     InternalIcon(
-                        config = AppButtonConfig.InternalIconConfig.vector(Icons.AutoMirrored.Default.ArrowForwardIos),
+                        config = InternalIconConfig.vector(Icons.AutoMirrored.Default.ArrowForwardIos),
                         iconTint = colors.tertiary,
                         applyTint = true,
                         modifier = Modifier

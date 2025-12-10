@@ -1,7 +1,6 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation.dashboard
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -9,25 +8,15 @@ import androidx.compose.animation.core.animateIntOffset
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
@@ -51,14 +40,9 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -66,19 +50,14 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import io.github.curioustools.curiousnews.presentation.AppColors
+import io.github.curioustools.curiousnews.presentation.isAppInDarkTheme
 import kotlin.apply
 import kotlin.collections.forEachIndexed
-import kotlin.collections.mapIndexed
 import kotlin.let
 import kotlin.run
 
-// todo : center filled navbar https://stackoverflow.com/questions/77991426/compose-bottom-nav-bar-with-custom-shape-and-transparent-around-it
 
-// todo tata aig navbar with jumping background
-
-// todo glass ui navbar
-
-// todo navbar auto hide
 
 @Composable
 fun CircleBottomBar(
@@ -177,7 +156,7 @@ fun CircleBottomBar(
                         selectedTextColor = selectedColor,
                         unselectedIconColor = unselectedColor,
                         unselectedTextColor = unselectedColor,
-                        selectedIndicatorColor = Color.Companion.Transparent,
+                        selectedIndicatorColor = Color.Transparent,
                     )
                 )
             }

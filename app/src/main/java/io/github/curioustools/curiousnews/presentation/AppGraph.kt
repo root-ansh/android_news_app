@@ -1,4 +1,4 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation
 
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
@@ -13,8 +13,11 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import io.github.curioustools.curiousnews.presentation.detail.ArticleDetailScreen
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardScreen
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardViewModel
+import io.github.curioustools.curiousnews.domain.dto.NewsResults
 import kotlinx.serialization.Serializable
-import kotlin.collections.removeLastOrNull
 
 @Composable
 fun AppGraph() {
@@ -36,20 +39,12 @@ fun AppGraph() {
                 },
                 metadata = emptyMap()
             )
-            entry<AppRoutes.ArticleLoading>(
+            entry<AppRoutes.ArticleDetail>(
                 content = {
                     val vm = if (commonHandle != null)
                         hiltViewModel<DashboardViewModel>(commonHandle)
                     else hiltViewModel<DashboardViewModel>()
-                },
-                metadata = emptyMap()
-            )
-            entry<AppRoutes.ArticleNative>(
-                content = {
-                    val vm = if (commonHandle != null)
-                        hiltViewModel<DashboardViewModel>(commonHandle)
-                    else hiltViewModel<DashboardViewModel>()
-                    ArticleNativeScreen(backstack, vm, it.current)
+                    ArticleDetailScreen(backstack, vm, it.current)
                 },
                 metadata = emptyMap()
             )
@@ -57,14 +52,15 @@ fun AppGraph() {
 
         },
 
-    )
+        )
 
 }
 
 sealed interface AppRoutes : NavKey {
-    @Serializable data object Dashboard : AppRoutes
-    @Serializable data class ArticleLoading(val current: String) : AppRoutes
-    @Serializable data class ArticleNative(val current: NewsResults.NewsItem) : AppRoutes
+    @Serializable
+    data object Dashboard : AppRoutes
+    @Serializable
+    data class ArticleDetail(val current: NewsResults.NewsItem) : AppRoutes
 }
 
 fun horizontalBackPressAnimation(duration: Int = 500): ContentTransform {

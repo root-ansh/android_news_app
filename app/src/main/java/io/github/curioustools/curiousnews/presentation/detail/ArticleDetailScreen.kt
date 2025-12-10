@@ -1,4 +1,4 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation.detail
 
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
@@ -14,17 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkAdded
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -51,18 +45,36 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.commons.log
+import io.github.curioustools.curiousnews.domain.dto.NewsResults
+import io.github.curioustools.curiousnews.presentation.AnimatedSnackBarHost
+import io.github.curioustools.curiousnews.presentation.AppColors
+import io.github.curioustools.curiousnews.presentation.AppCommonBottomSheetType
+import io.github.curioustools.curiousnews.presentation.AppCommonUiActions
+import io.github.curioustools.curiousnews.presentation.AppLinkButton
+import io.github.curioustools.curiousnews.presentation.AppToolbar
+import io.github.curioustools.curiousnews.presentation.CommonBottomSheet
+import io.github.curioustools.curiousnews.presentation.GradientCircularProgressIndicator
+import io.github.curioustools.curiousnews.presentation.colors
+import io.github.curioustools.curiousnews.presentation.dashboard.ActionModel
+import io.github.curioustools.curiousnews.presentation.dashboard.ActionModelType
+import io.github.curioustools.curiousnews.presentation.dashboard.AllResultsRequestType
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardIntent
+import io.github.curioustools.curiousnews.presentation.dashboard.DashboardViewModel
+import io.github.curioustools.curiousnews.presentation.headlines.NewsIcon
+import io.github.curioustools.curiousnews.presentation.textStyles
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun ArticleNativeScreen(
+fun ArticleDetailScreen(
     backStack: NavBackStack<NavKey>,
     viewModel: DashboardViewModel,
     currentItem: NewsResults.NewsItem
 ) {
 
     val scope = rememberCoroutineScope()
-    val allPages = NavBarItem.entries
 
     val lifeCycleOwner = LocalLifecycleOwner.current
     val ctx = LocalContext.current
@@ -102,7 +114,7 @@ fun ArticleNativeScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
-        ArticleNativeScreenUI(currentItem) { it: DashboardIntent -> viewModel.onIntent(it) }
+        ArticleDetailScreenUI(currentItem) { it: DashboardIntent -> viewModel.onIntent(it) }
         if (showLoader) GradientCircularProgressIndicator(Modifier.align(Alignment.Center))
         AnimatedSnackBarHost(showSnackBar) { showSnackBar = "" }
         showBottomSheet?.let {
@@ -118,7 +130,7 @@ fun ArticleNativeScreen(
 
 @Preview
 @Composable
-fun ArticleNativeScreenUI(
+fun ArticleDetailScreenUI(
     article: NewsResults.NewsItem = NewsResults.mock().articles.first(),
     onClick: (DashboardIntent) -> Unit = {}
 ) {
@@ -133,8 +145,7 @@ fun ArticleNativeScreenUI(
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 80.dp)
-                        .background(AppColors.orange_bright_ff8)
-                    ,
+                        .background(AppColors.orange_bright_ff8),
                 )
                 AppToolbar(
                     title = stringResource(R.string.article_summary),

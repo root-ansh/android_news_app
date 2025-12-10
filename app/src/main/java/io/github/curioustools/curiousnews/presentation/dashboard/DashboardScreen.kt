@@ -1,4 +1,4 @@
-package io.github.curioustools.curiousnews
+package io.github.curioustools.curiousnews.presentation.dashboard
 
 import android.content.Context
 import android.widget.Toast
@@ -33,7 +33,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import io.github.curioustools.curiousnews.NavBarItem.*
+import io.github.curioustools.curiousnews.presentation.dashboard.NavBarItem.*
+import io.github.curioustools.curiousnews.R
+import io.github.curioustools.curiousnews.commons.log
+import io.github.curioustools.curiousnews.presentation.AnimatedSnackBarHost
+import io.github.curioustools.curiousnews.presentation.AppCommonBottomSheetType
+import io.github.curioustools.curiousnews.presentation.AppCommonUiActions
+import io.github.curioustools.curiousnews.presentation.CommonBottomSheet
+import io.github.curioustools.curiousnews.presentation.GradientCircularProgressIndicator
+import io.github.curioustools.curiousnews.presentation.SafeColorColumn
+import io.github.curioustools.curiousnews.presentation.bookmarks.BookmarksScreen
+import io.github.curioustools.curiousnews.presentation.colors
+import io.github.curioustools.curiousnews.presentation.headlines.ArticlesScreen
+import io.github.curioustools.curiousnews.presentation.search.SearchScreen
+import io.github.curioustools.curiousnews.presentation.settings.SettingsScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -44,7 +57,7 @@ fun DashboardScreen(
     viewModel: DashboardViewModel,
 ) {
     val scope = rememberCoroutineScope()
-    val allPages = NavBarItem.entries
+    val allPages = entries
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { allPages.size })
 
     val lifeCycleOwner = LocalLifecycleOwner.current
@@ -98,10 +111,10 @@ fun DashboardScreen(
                 ) { pos ->
                     val currentPage = allPages[pos]
                     when(currentPage){
-                        Articles -> ArticlesScreen(state, onClick = {viewModel.onIntent(it)})
-                        Bookmarks -> BookmarksScreen(state, onClick = {viewModel.onIntent(it)})
-                        Search -> SearchScreen(state, onClick = {viewModel.onIntent(it)})
-                        Settings -> SettingsScreen(backStack,viewModel)
+                        NavBarItem.Articles -> ArticlesScreen(state, onClick = { viewModel.onIntent(it) })
+                        NavBarItem.Bookmarks -> BookmarksScreen(state, onClick = { viewModel.onIntent(it) })
+                        NavBarItem.Search -> SearchScreen(state, onClick = { viewModel.onIntent(it) })
+                        NavBarItem.Settings -> SettingsScreen(backStack,viewModel)
                     }
                 }
                 CircleBottomBar(
