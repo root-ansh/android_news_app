@@ -1,13 +1,41 @@
 <resources>
-    <string name="app_name">News View</string>
-    <string name="default_text">"this is a default check text from wikipedia:."
-        ,"url":"https://timesofindia.indiatimes.com/world/middle - east/hundreds - of - 
-        mysterious - stone - gates - found - in - saudi - arabias - desert
-        /articleshow/61162593.cms","urlToImage":"https://static.toiimg.com/photo/msid - 61163090/61163090.jpg?333008"
-        ,"publishedAt":"2017 - 10 - 21T04:33:58Z"},{"author":null,"title":"Srikanth sails
-       
-    </string>
+    <string name="app_name">CuriousNews</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="string_my_profile">My Profile</string>
+
+    <string name="settings">Settings</string>
+    <string name="share_feedback">Share Feedback</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="change_theme">Change Theme</string>
+
+    <string name="msg_theme_light">This will set your app\'s theme to light</string>
+    <string name="msg_theme_dark">This will set your app\'s theme to dark</string>
+    <string name="msg_theme_auto">This will set your app\'s theme synced to system theme</string>
+    <string name="articles">Headlines </string>
+    <string name="bookmarks">Bookmarks</string>
+    <string name="your_saved_bookmarks">Your Saved Bookmarks</string>
+    <string name="all_articles">Latest Headlines from your area </string>
+    <string name="clear_all_bookmarks_and_api_cache">Clear All Bookmarks and api cache</string>
+    <string name="cache_cleared">All bookmarks and news cache cleared successfully</string>
+    <string name="search">Search</string>
+    <string name="search_for_an_article">Search for an article</string>
+    <string name="bookmark_this_item">Bookmark this item</string>
+    <string name="share">Share</string>
+    <string name="search_by_article_title_subtitle_author_or_label">Search by article title, subtitle, author or label</string>
+    <string name="clear_cache">Clear Cache?</string>
+    <string name="clearn_cache_msg">All your Bookmarks and Saved Articles will be removed.</string>
+    <string name="word_continue">Continue</string>
+    <string name="searc_new">Enter something to start a search</string>
+    <string name="search_no_results">" No Results found"</string>
+    <string name="search_results">%1$d items available for your query \'%2$s\'</string>
+    <string name="no_articles_found">No articles Found !</string>
+    <string name="retry">Retry</string>
+    <string name="read_summary">Read Summary</string>
+    <string name="read_in_web">Read in web</string>
+    <string name="article_summary">Article Summary</string>
+    <string name="from">From : %1$s</string>
+    <string name="published_on">Published on %1$s</string>
+    <string name="bullet_ascii">" • "</string>
+
+
 </resources>
