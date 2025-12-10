@@ -43,7 +43,6 @@ fun DashboardScreen(
     backStack: NavBackStack<NavKey>,
     viewModel: DashboardViewModel,
 ) {
-    log("test : DashboardScreen")
     val scope = rememberCoroutineScope()
     val allPages = NavBarItem.entries
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { allPages.size })

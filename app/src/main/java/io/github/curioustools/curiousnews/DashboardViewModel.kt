@@ -88,7 +88,8 @@ class DashboardViewModel @Inject constructor(
                     BOOKMARK -> handleBookmarkClick(actionModel.item)
                     OPEN_NATIVE -> {
                         emitLaunchEffectEvent(LaunchUsingController{
-                            it.add(AppRoutes.ArticleNative(actionModel.item?.title.orEmpty()))
+                            actionModel.item?.let { article ->  it.add(AppRoutes.ArticleNative(article))  }
+
                         })
                     }
                 }

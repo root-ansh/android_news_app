@@ -41,7 +41,6 @@ fun AppGraph() {
                     val vm = if (commonHandle != null)
                         hiltViewModel<DashboardViewModel>(commonHandle)
                     else hiltViewModel<DashboardViewModel>()
-                    ArticleLoadingScreen(backstack, vm)
                 },
                 metadata = emptyMap()
             )
@@ -50,7 +49,7 @@ fun AppGraph() {
                     val vm = if (commonHandle != null)
                         hiltViewModel<DashboardViewModel>(commonHandle)
                     else hiltViewModel<DashboardViewModel>()
-                    ArticleNativeScreen(backstack, vm)
+                    ArticleNativeScreen(backstack, vm, it.current)
                 },
                 metadata = emptyMap()
             )
@@ -65,7 +64,7 @@ fun AppGraph() {
 sealed interface AppRoutes : NavKey {
     @Serializable data object Dashboard : AppRoutes
     @Serializable data class ArticleLoading(val current: String) : AppRoutes
-    @Serializable data class ArticleNative(val current: String) : AppRoutes
+    @Serializable data class ArticleNative(val current: NewsResults.NewsItem) : AppRoutes
 }
 
 fun horizontalBackPressAnimation(duration: Int = 500): ContentTransform {

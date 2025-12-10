@@ -32,6 +32,10 @@
     <string name="retry">Retry</string>
     <string name="read_summary">Read Summary</string>
     <string name="read_in_web">Read in web</string>
+    <string name="article_summary">Article Summary</string>
+    <string name="from">From : %1$s</string>
+    <string name="published_on">Published on %1$s</string>
+    <string name="bullet_ascii">" • "</string>
 
 
 </resources>
