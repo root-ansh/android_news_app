@@ -132,8 +132,8 @@ fun DashboardScreen(
 
 enum class NavBarItem(val unselectedVector: ImageVector, val selectedVector: ImageVector){
     Articles(Icons.Outlined.Book,Icons.Default.Book,),
-    Bookmarks(Icons.Default.BookmarkBorder,Icons.Default.Bookmark,),
     Search(Icons.Default.Search,Icons.Filled.Search,),
+    Bookmarks(Icons.Default.BookmarkBorder,Icons.Default.Bookmark,),
     Settings(Icons.Default.PersonOutline,Icons.Default.Person);
 
     fun getTitle(context: Context): String{

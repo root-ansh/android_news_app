@@ -171,7 +171,14 @@ fun NewsCard(
         contentAlignment = Alignment.Center,
         content = {
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().clickable{onClick.invoke(
+                    DashboardIntent.ActionClicked(
+                        ActionModel(
+                            type = ActionModelType.OPEN_NATIVE,
+                            item = item
+                        )
+                    )
+                )}
             ){
                 Column(Modifier
                     .fillMaxWidth()

@@ -11,10 +11,10 @@
     <string name="msg_theme_light">This will set your app\'s theme to light</string>
     <string name="msg_theme_dark">This will set your app\'s theme to dark</string>
     <string name="msg_theme_auto">This will set your app\'s theme synced to system theme</string>
-    <string name="articles">Articles</string>
+    <string name="articles">Headlines </string>
     <string name="bookmarks">Bookmarks</string>
     <string name="your_saved_bookmarks">Your Saved Bookmarks</string>
-    <string name="all_articles">All Articles</string>
+    <string name="all_articles">Latest Headlines from your area </string>
     <string name="clear_all_bookmarks_and_api_cache">Clear All Bookmarks and api cache</string>
     <string name="cache_cleared">All bookmarks and news cache cleared successfully</string>
     <string name="search">Search</string>

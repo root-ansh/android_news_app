@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -209,20 +210,21 @@ fun ArticleNativeScreenUI(
             HorizontalDivider(Modifier.fillMaxWidth())
 
         }
-        item {
+        items((1..10).map { article.content }.size){ content ->
             article.content.orEmpty().let {
                 if (it.isNotBlank()) {
-                    Text(text = it,
+                    Text(text = it.take(it.length-16),
                         color = colors().onBackground,
                         style = textStyles().bodyRegular,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
                     )
-                    HorizontalDivider(Modifier.fillMaxWidth())
                 }
             }
         }
+        item {
+            article.content.let { if(it.isNotBlank()) HorizontalDivider(Modifier.fillMaxWidth()) }
+        }
+
         item {
             var bookmark by remember { mutableStateOf(article.isBookmarked) }
             Row(Modifier
@@ -290,6 +292,8 @@ fun ArticleNativeScreenUI(
 
             }
         }
+
+        item { Spacer(Modifier.height(120.dp)) }
     }
 
 
